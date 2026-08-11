@@ -176,8 +176,10 @@ export default function VideoBackground({
             videoLoaded ? "opacity-60" : "opacity-30"
           }`}
         >
-          <source src={webmSrc} type="video/webm" />
-          <source src={mp4Src} type="video/mp4" />
+          {webmSrc && <source src={webmSrc} type="video/webm" />}
+          {mp4Src && mp4Src !== "/assets/rift-loop.mp4" && (
+            <source src={mp4Src} type="video/mp4" />
+          )}
         </video>
       )}
 

@@ -37,6 +37,11 @@ export default function RootLayout({
       lang="en"
       className={`${chakraPetch.variable} ${inter.variable} dark scroll-smooth`}
     >
+      <head>
+        <link rel="icon" href="/New_images/character.png" type="image/png" sizes="any" />
+        <link rel="shortcut icon" href="/New_images/character.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/New_images/character.png" />
+      </head>
       <body className="min-h-screen bg-[#05050a] text-gray-100 font-sans antialiased selection:bg-[#8a2be2] selection:text-white overflow-x-hidden">
         {children}
       </body>
