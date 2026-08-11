@@ -232,7 +232,7 @@ export default function Hero3D() {
           className="inline-flex items-center gap-2 px-3.5 py-1.5 sm:px-5 sm:py-2 rounded-full bg-purple-950/80 border border-cyan-400/50 shadow-[0_0_25px_rgba(34,211,238,0.4)] mb-3 sm:mb-5 text-[10px] sm:text-xs uppercase tracking-widest font-mono text-cyan-300 backdrop-blur-md max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
         >
           <Sparkles className="w-3.5 h-3.5 text-cyan-400 animate-spin shrink-0" />
-          <span className="truncate">COLLEGE BUSINESS INNOVATION HACKATHON</span>
+          <span className="truncate">02/09/2026 — COLLEGE BUSINESS INNOVATION HACKATHON</span>
           <span className="w-2 h-2 rounded-full bg-pink-500 animate-ping shrink-0" />
         </motion.div>
 
@@ -311,8 +311,8 @@ export default function Hero3D() {
             <div className="text-gray-400 text-[10px] sm:text-xs tracking-wider uppercase mt-1">Mini Hackathon Finalists</div>
           </div>
           <div className="pt-2 md:pt-0 pl-2 sm:pl-0">
-            <div className="text-amber-400 text-xl sm:text-2xl font-bold">ROUND 1 & 2</div>
-            <div className="text-gray-400 text-[10px] sm:text-xs tracking-wider uppercase mt-1">PPT + 4-Hr Live Build</div>
+            <div className="text-amber-400 text-xl sm:text-2xl font-bold">02/09/2026</div>
+            <div className="text-gray-400 text-[10px] sm:text-xs tracking-wider uppercase mt-1">Official Event Date</div>
           </div>
         </div>
       </div>

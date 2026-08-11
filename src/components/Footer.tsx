@@ -56,11 +56,11 @@ export default function Footer() {
             </h4>
 
             <div className="p-3.5 rounded-xl bg-purple-950/40 border border-purple-500/30 flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-cyan-400 shrink-0" />
+              <Calendar className="w-5 h-5 text-amber-400 shrink-0" />
               <div>
-                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Department</div>
-                <div className="text-cyan-300 font-bold tracking-wider text-xs">
-                  Dept. of AI & Data Science
+                <div className="text-[10px] text-gray-400 uppercase tracking-wider">Official Event Date</div>
+                <div className="text-amber-300 font-bold tracking-wider text-xs sm:text-sm">
+                  02/09/2026 <span className="text-gray-400 font-normal text-[10px] ml-1">(2 September 2026)</span>
                 </div>
               </div>
             </div>
@@ -69,7 +69,7 @@ export default function Footer() {
               <MapPin className="w-5 h-5 text-pink-400 shrink-0" />
               <div>
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider">Institution</div>
-                <div className="text-amber-300 font-bold tracking-wider text-xs">
+                <div className="text-cyan-300 font-bold tracking-wider text-xs">
                   Srinivas Institute of Technology
                 </div>
               </div>
