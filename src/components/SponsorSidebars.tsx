@@ -18,12 +18,6 @@ const OFFICIAL_SPONSORS = [
     name: "SUVITA INVESTOR SERVICES",
     category: "OFFICIAL SPONSOR",
   },
-  {
-    id: "sp3",
-    src: "/sponsors/sponser3.jpeg",
-    name: "KATEELESHWARI DEVELOPERS",
-    category: "OFFICIAL SPONSOR",
-  },
 ];
 
 // Official Advisor Organizations (Real Names Only - No Generic Placeholders)
@@ -78,12 +72,15 @@ const ADVISORY_BOARD = [
   },
 ];
 
-// Combined list for horizontal continuous marquee
+// Full unique list of all sponsors and advisors
+const ALL_SPONSOR_ITEMS = [...OFFICIAL_SPONSORS, ...OFFICIAL_ADVISORS];
+
+// Multiplied 4x for a perfectly seamless, unbroken infinite marquee loop with zero blank gaps or resets
 const COMBINED_SPONSOR_ADVISORS = [
-  ...OFFICIAL_SPONSORS,
-  ...OFFICIAL_ADVISORS,
-  ...OFFICIAL_SPONSORS,
-  ...OFFICIAL_ADVISORS,
+  ...ALL_SPONSOR_ITEMS,
+  ...ALL_SPONSOR_ITEMS,
+  ...ALL_SPONSOR_ITEMS,
+  ...ALL_SPONSOR_ITEMS,
 ];
 
 export default function SponsorSidebars() {
@@ -101,7 +98,7 @@ export default function SponsorSidebars() {
         </div>
         <div className="relative w-full flex-1 overflow-hidden py-2 pointer-events-auto">
           <div className="flex flex-col items-center gap-4 animate-marquee-down py-2">
-            {[...OFFICIAL_SPONSORS, ...OFFICIAL_SPONSORS, ...OFFICIAL_SPONSORS].map((item, idx) => (
+            {[...OFFICIAL_SPONSORS, ...OFFICIAL_SPONSORS, ...OFFICIAL_SPONSORS, ...OFFICIAL_SPONSORS].map((item, idx) => (
               <div
                 key={`left-rail-${item.id}-${idx}`}
                 title={item.name}
@@ -132,7 +129,7 @@ export default function SponsorSidebars() {
         </div>
         <div className="relative w-full flex-1 overflow-hidden py-2 pointer-events-auto">
           <div className="flex flex-col items-center gap-4 animate-marquee-up py-2">
-            {[...OFFICIAL_ADVISORS, ...OFFICIAL_ADVISORS, ...OFFICIAL_ADVISORS].map((item, idx) => (
+            {[...OFFICIAL_ADVISORS, ...OFFICIAL_ADVISORS, ...OFFICIAL_ADVISORS, ...OFFICIAL_ADVISORS].map((item, idx) => (
               <div
                 key={`right-rail-${item.id}-${idx}`}
                 title={item.name}
@@ -155,13 +152,13 @@ export default function SponsorSidebars() {
       {/* ── 2. MAIN BOTTOM SPONSORS, ADVISORS & ADVISORY BOARD SECTION ── */}
       <section
         id="sponsors"
-        className="w-full py-16 sm:py-20 px-4 bg-[#05040d] border-t border-b border-purple-500/20 text-white overflow-hidden relative z-20 select-none"
+        className="w-full py-14 sm:py-20 px-3 sm:px-6 bg-[#05040d] border-t border-b border-purple-500/20 text-white overflow-hidden relative z-20 select-none max-w-full"
       >
         {/* Background Glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-purple-900/10 rounded-full blur-[140px] pointer-events-none" />
 
-        <div className="max-w-6xl mx-auto text-center mb-10 relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-950/80 border border-purple-500/40 text-cyan-300 font-mono text-xs tracking-widest uppercase mb-3 shadow-[0_0_15px_rgba(138,43,226,0.3)] backdrop-blur-md">
+        <div className="max-w-6xl mx-auto text-center mb-8 sm:mb-10 relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-950/80 border border-purple-500/40 text-cyan-300 font-mono text-xs tracking-widest uppercase mb-3 shadow-[0_0_15px_rgba(138,43,226,0.3)] backdrop-blur-md">
             <Award className="w-3.5 h-3.5 text-amber-400" />
             <span>COLLABORATIVE ECOSYSTEM</span>
           </div>
@@ -169,30 +166,30 @@ export default function SponsorSidebars() {
           <h2 className="text-2xl sm:text-4xl font-extrabold font-mono uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-500 drop-shadow-[0_0_20px_rgba(138,43,226,0.5)]">
             EVENT SPONSORS, ADVISORS & PARTNERS
           </h2>
-          <p className="mt-2 text-xs sm:text-sm text-gray-400 font-sans max-w-lg mx-auto">
+          <p className="mt-2 text-xs sm:text-sm text-gray-400 font-sans max-w-lg mx-auto px-2">
             Empowering student innovation and business transformation at Miraethon 2026.
           </p>
         </div>
 
         {/* ── Institutional Advisory Board Grid ── */}
-        <div className="max-w-5xl mx-auto mb-12 relative z-10">
-          <div className="flex items-center justify-center gap-2 mb-6 font-mono text-xs text-amber-400 uppercase tracking-widest font-bold">
+        <div className="max-w-5xl mx-auto mb-10 sm:mb-12 relative z-10 px-2">
+          <div className="flex items-center justify-center gap-2 mb-5 font-mono text-xs text-amber-400 uppercase tracking-widest font-bold">
             <UserCheck className="w-4 h-4 text-cyan-400" />
             <span>INSTITUTIONAL ADVISORY BOARD</span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
             {ADVISORY_BOARD.map((board, idx) => (
               <div
                 key={`board-${idx}`}
-                className="p-4 rounded-2xl bg-black/70 border border-purple-500/30 hover:border-cyan-400/50 shadow-[0_0_15px_rgba(138,43,226,0.2)] transition-all duration-300 flex items-start gap-3"
+                className="p-3.5 sm:p-4 rounded-2xl bg-black/70 border border-purple-500/30 hover:border-cyan-400/50 shadow-[0_0_15px_rgba(138,43,226,0.2)] transition-all duration-300 flex items-start gap-3"
               >
                 <ShieldCheck className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
                 <div className="text-left font-mono">
-                  <h4 className="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
+                  <h4 className="text-xs sm:text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">
                     {board.name}
                   </h4>
-                  <p className="text-[11px] text-gray-400 font-sans mt-0.5 leading-snug">
+                  <p className="text-[10px] sm:text-[11px] text-gray-400 font-sans mt-0.5 leading-snug">
                     {board.role}
                   </p>
                 </div>
@@ -201,16 +198,16 @@ export default function SponsorSidebars() {
           </div>
         </div>
 
-        {/* ── Continuous Horizontal Marquee Loop Moving LEFT → RIGHT (Real Names Only) ── */}
-        <div className="w-full overflow-hidden relative z-10 py-3">
-          <div className="flex items-center gap-5 sm:gap-8 animate-marquee-right py-2">
+        {/* ── Continuous Horizontal Marquee Loop Moving LEFT → RIGHT (ALL Sponsors Included & Seamless) ── */}
+        <div className="w-full overflow-hidden relative z-10 py-2 sm:py-3">
+          <div className="flex items-center gap-4 sm:gap-8 animate-marquee-right py-2 w-max">
             {COMBINED_SPONSOR_ADVISORS.map((item, idx) => (
               <div
                 key={`sponsor-loop-${item.id}-${idx}`}
-                className="flex-shrink-0 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl bg-black/80 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_20px_rgba(138,43,226,0.25)] hover:shadow-[0_0_30px_rgba(34,211,238,0.4)] transition-all duration-300 group cursor-pointer"
+                className="flex-shrink-0 flex items-center gap-3 sm:gap-3.5 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-black/80 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_20px_rgba(138,43,226,0.25)] hover:shadow-[0_0_30px_rgba(34,211,238,0.4)] transition-all duration-300 group cursor-pointer"
               >
                 {/* White Background Logo Container */}
-                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
+                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
                   <Image
                     src={item.src}
                     alt={item.name}
@@ -221,10 +218,10 @@ export default function SponsorSidebars() {
                   />
                 </div>
                 <div className="flex flex-col text-left">
-                  <span className="text-xs sm:text-sm font-mono font-bold text-white group-hover:text-cyan-300 transition-colors whitespace-nowrap">
+                  <span className="text-[11px] sm:text-sm font-mono font-bold text-white group-hover:text-cyan-300 transition-colors whitespace-nowrap">
                     {item.name}
                   </span>
-                  <span className="text-[10px] font-mono text-cyan-400/80 uppercase tracking-wider">
+                  <span className="text-[9px] sm:text-[10px] font-mono text-cyan-400/80 uppercase tracking-wider">
                     {item.category}
                   </span>
                 </div>
