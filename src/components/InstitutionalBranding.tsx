@@ -73,9 +73,9 @@ export default function InstitutionalBranding() {
       className="w-full flex flex-col items-center max-w-full px-3 mb-3 sm:mb-5 select-none"
       style={{ background: "transparent" }}
     >
-      {/* ── College Name ── */}
+      {/* ── College Name (Bold, Guaranteed 1 Single Line) ── */}
       <span
-        className="text-[10px] xs:text-[12px] sm:text-[15px] md:text-[17px] tracking-[0.14em] sm:tracking-[0.2em] font-bold font-mono uppercase text-white leading-tight text-center max-w-full drop-shadow-[0_2px_10px_rgba(0,0,0,1)]"
+        className="text-[9px] xs:text-[11px] sm:text-[14px] md:text-[16px] tracking-[0.1em] sm:tracking-[0.18em] font-extrabold font-mono uppercase text-white leading-none text-center max-w-full whitespace-nowrap drop-shadow-[0_2px_12px_rgba(0,0,0,1)]"
         style={{
           textShadow: "0 0 16px rgba(0,0,0,1), 0 2px 8px rgba(0,0,0,1)",
         }}
@@ -83,12 +83,12 @@ export default function InstitutionalBranding() {
         SRINIVAS INSTITUTE OF TECHNOLOGY, VALACHIL MANGALORE
       </span>
 
-      {/* ── Department Name ── */}
+      {/* ── Department Name (Vibrant High-Contrast Color) ── */}
       <span
-        className="text-[9.5px] xs:text-[11px] sm:text-[13.5px] md:text-[15px] tracking-[0.12em] sm:tracking-[0.16em] font-mono uppercase font-extrabold leading-tight text-center max-w-full mt-1"
+        className="text-[9px] xs:text-[10.5px] sm:text-[13px] md:text-[14.5px] tracking-[0.1em] sm:tracking-[0.15em] font-mono uppercase font-extrabold leading-tight text-center max-w-full mt-1.5"
         style={{
-          color: "#a5f3fc",
-          textShadow: "0 0 18px rgba(0,0,0,1), 0 0 25px rgba(34,211,238,0.6), 0 2px 8px rgba(0,0,0,1)",
+          color: "#fde047",
+          textShadow: "0 0 18px rgba(0,0,0,1), 0 0 25px rgba(253,224,71,0.5), 0 2px 8px rgba(0,0,0,1)",
         }}
       >
         DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND DATA SCIENCE

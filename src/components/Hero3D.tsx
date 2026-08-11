@@ -241,10 +241,10 @@ export default function Hero3D() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.9, delay: 0.15 }}
-          className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tight uppercase font-mono text-transparent bg-clip-text bg-gradient-to-r from-white via-[#f1f5f9] to-[#c7d2fe] animate-flicker drop-shadow-[0_6px_35px_rgba(0,0,0,1)] mb-2 select-none max-w-full break-words"
+          className="text-4xl xs:text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tight uppercase font-mono text-transparent bg-clip-text bg-gradient-to-r from-[#38bdf8] via-white to-[#ff2e88] animate-flicker drop-shadow-[0_6px_35px_rgba(0,0,0,1)] mb-2 select-none max-w-full break-words"
           style={{
             fontSize: "clamp(2.2rem, 8.5vw, 7.5rem)",
-            filter: "drop-shadow(0 0 25px rgba(34,211,238,0.45)) drop-shadow(0 0 50px rgba(138,43,226,0.3))",
+            filter: "drop-shadow(0 0 30px rgba(56,189,248,0.7)) drop-shadow(0 0 60px rgba(255,46,136,0.45))",
           }}
         >
           MIRAETHON 2026
