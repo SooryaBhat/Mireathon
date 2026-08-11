@@ -45,7 +45,7 @@ function MovingHero3DPlane({
     <group>
       {/* 3D Moving Hero Image Mesh (100% Bright, Vivid, and Clear Artwork) */}
       <mesh ref={meshRef} position={[0, 0, -1.2]}>
-        <planeGeometry args={[18.0, 11.5, 32, 32]} />
+        <planeGeometry args={[18.5, 12.0, 32, 32]} />
         <meshBasicMaterial
           map={texture}
           transparent={false}
@@ -134,6 +134,23 @@ function AtmosphereParticles() {
 export default function Hero3DCanvas() {
   const mouse = useRef({ x: 0, y: 0 });
   const [isLightning, setIsLightning] = useState(false);
+  const [cameraFov, setCameraFov] = useState(50);
+
+  useEffect(() => {
+    const handleResize = () => {
+      // Adjust FOV on mobile portrait viewports so full 3D plane fills screen edge-to-edge
+      if (typeof window !== "undefined") {
+        if (window.innerWidth < 768) {
+          setCameraFov(68);
+        } else {
+          setCameraFov(50);
+        }
+      }
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -156,7 +173,7 @@ export default function Hero3DCanvas() {
       className="absolute inset-0 w-full h-full pointer-events-auto select-none"
     >
       <Canvas
-        camera={{ position: [0, 0, 6.2], fov: 50 }}
+        camera={{ position: [0, 0, 6.2], fov: cameraFov }}
         dpr={[1, 1.5]}
         gl={{ antialias: true, alpha: true }}
       >

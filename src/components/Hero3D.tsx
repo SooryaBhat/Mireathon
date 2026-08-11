@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import VideoBackground from "./VideoBackground";
 import InstitutionalBranding from "./InstitutionalBranding";
 
-// Dynamically import Three.js 3D canvas component for desktop view
+// Dynamically import Three.js 3D canvas component for edge-to-edge 3D hero scene
 const Hero3DCanvas = dynamic(() => import("./Hero3DCanvas"), {
   ssr: false,
   loading: () => (
@@ -50,17 +50,17 @@ export default function Hero3D() {
 
   return (
     <section className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#05050a] text-white">
-      {/* ── Desktop 3D Moving Canvas Layer (md+ viewports) ── */}
-      <div className="hidden md:block absolute inset-0 z-10 pointer-events-none">
+      {/* ── Edge-to-Edge 3D Moving Canvas Layer (Mobile & Desktop Edge-to-Edge World) ── */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
         <Hero3DCanvas />
       </div>
 
-      {/* Subtle Video Background & Fog Accent */}
+      {/* Minimal Video Background & Fog Accent (Bright, Zero Opaque Dark Overlay) */}
       <VideoBackground
         variant="hero"
         webmSrc="/assets/rift-loop.webm"
         posterSrc="/assets/rift-bg.png"
-        overlayOpacity={0.08}
+        overlayOpacity={0.05}
       />
 
       {/* Ambient Radial Accent Glows */}
@@ -212,26 +212,11 @@ export default function Hero3D() {
         </AnimatePresence>
       </header>
 
-      {/* ── Main Hero Content Overlay & Responsive Artwork Container ── */}
+      {/* ── Main Hero Content Overlay directly over the Edge-to-Edge 3D moving scene ── */}
       <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 md:pt-32 pb-12 sm:pb-16 flex-1 flex flex-col items-center justify-center text-center">
 
         {/* 1. Official College & Department Branding */}
         <InstitutionalBranding />
-
-        {/* ── Mobile Responsive Complete Hero Artwork Display (< md viewports) ── */}
-        <div className="md:hidden relative w-full my-4 px-1">
-          <div className="relative w-full rounded-2xl overflow-hidden border border-purple-500/40 shadow-[0_0_30px_rgba(138,43,226,0.4)] bg-black/80">
-            <Image
-              src="/New_images/hero_section1.png"
-              alt="Miraethon 2026 Complete 3D World Artwork"
-              width={1200}
-              height={750}
-              className="w-full h-auto object-contain block"
-              priority
-              unoptimized
-            />
-          </div>
-        </div>
 
         {/* Sci-Fi HUD Corner Brackets */}
         <div className="absolute top-28 left-4 w-6 h-6 sm:w-8 sm:h-8 border-t-2 border-l-2 border-cyan-400/60 hidden sm:block pointer-events-none" />
