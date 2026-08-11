@@ -9,6 +9,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import VideoBackground from "./VideoBackground";
 import InstitutionalBranding from "./InstitutionalBranding";
 
+/*
+ * Experimental mobile desktop-style visual mode.
+ * Easy to remove if not approved.
+ */
+
 // Dynamically import Three.js 3D canvas component for edge-to-edge 3D hero scene
 const Hero3DCanvas = dynamic(() => import("./Hero3DCanvas"), {
   ssr: false,
@@ -49,8 +54,8 @@ export default function Hero3D() {
   };
 
   return (
-    <section className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#05050a] text-white">
-      {/* ── Edge-to-Edge 3D Moving Canvas Layer (Mobile & Desktop Edge-to-Edge World) ── */}
+    <section className="relative w-full min-h-screen flex flex-col justify-between overflow-hidden bg-[#05050a] text-white hero-mobile-desktop-style">
+      {/* ── Edge-to-Edge 3D Moving Canvas Layer (Mobile Desktop-Style & Desktop Edge-to-Edge World) ── */}
       <div className="absolute inset-0 z-10 pointer-events-none">
         <Hero3DCanvas />
       </div>
