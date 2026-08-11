@@ -17,9 +17,13 @@ export const metadata: Metadata = {
   title: "MIRAETHON 2026 | AI Meets Business",
   description: "Official Business Innovation Hackathon presented by Department of Artificial Intelligence and Data Science, Srinivas Institute of Technology.",
   icons: {
-    icon: "/New_images/character.png",
+    icon: [
+      { url: "/New_images/character.png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
     shortcut: "/New_images/character.png",
-    apple: "/New_images/character.png",
+    apple: "/apple-touch-icon.png",
   },
 };
 
