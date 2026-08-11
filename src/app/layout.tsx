@@ -16,6 +16,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "MIRAETHON 2026 | AI Meets Business",
   description: "Official Business Innovation Hackathon presented by Department of Artificial Intelligence and Data Science, Srinivas Institute of Technology.",
+  icons: {
+    icon: "/New_images/character.png",
+    shortcut: "/New_images/character.png",
+    apple: "/New_images/character.png",
+  },
 };
 
 export default function RootLayout({
