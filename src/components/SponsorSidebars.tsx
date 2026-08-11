@@ -2,16 +2,17 @@
 
 import React from "react";
 import Image from "next/image";
+import { Sparkles, Award } from "lucide-react";
 
 // List of available sponsor & advisor images located in /public/sponsors/
 const SPONSOR_IMAGES = [
-  { id: "sponser1", src: "/sponsors/sponser1.jpeg", label: "Sponsor Partner 01" },
-  { id: "advisor1", src: "/sponsors/advisor1.jpeg", label: "Advisor 01" },
-  { id: "sponser2", src: "/sponsors/sponser2.jpeg", label: "Sponsor Partner 02" },
-  { id: "advisor2", src: "/sponsors/advisor2.jpeg", label: "Advisor 02" },
-  { id: "sponser3", src: "/sponsors/sponser3.jpeg", label: "Sponsor Partner 03" },
-  { id: "advisor3", src: "/sponsors/advisor3.jpeg", label: "Advisor 03" },
-  { id: "advisor4", src: "/sponsors/advisor4.jpeg", label: "Advisor 04" },
+  { id: "sponser1", src: "/sponsors/sponser1.jpeg", label: "Industry Partner 01" },
+  { id: "advisor1", src: "/sponsors/advisor1.jpeg", label: "Strategic Advisor 01" },
+  { id: "sponser2", src: "/sponsors/sponser2.jpeg", label: "Technology Partner 02" },
+  { id: "advisor2", src: "/sponsors/advisor2.jpeg", label: "Academic Advisor 02" },
+  { id: "sponser3", src: "/sponsors/sponser3.jpeg", label: "Innovation Partner 03" },
+  { id: "advisor3", src: "/sponsors/advisor3.jpeg", label: "Research Advisor 03" },
+  { id: "advisor4", src: "/sponsors/advisor4.jpeg", label: "Domain Advisor 04" },
 ];
 
 export default function SponsorSidebars() {
@@ -20,102 +21,66 @@ export default function SponsorSidebars() {
   }
 
   // Duplicate items for continuous infinite marquee loop
-  const duplicatedItems = [...SPONSOR_IMAGES, ...SPONSOR_IMAGES, ...SPONSOR_IMAGES];
+  const duplicatedItems = [
+    ...SPONSOR_IMAGES,
+    ...SPONSOR_IMAGES,
+    ...SPONSOR_IMAGES,
+    ...SPONSOR_IMAGES,
+  ];
 
   return (
-    <>
-      {/* ── DESKTOP ONLY: Fixed Left & Right Vertical Sidebars (lg+ screens) ── */}
-      {/* Left Edge Fixed Vertical Marquee Sidebar (z-10, low opacity, pointer pass-through except icons) */}
-      <aside
-        aria-label="Sponsors and Advisors Left Sidebar"
-        className="fixed left-2 top-28 bottom-12 z-10 hidden xl:flex flex-col items-center overflow-hidden w-14 pointer-events-none select-none opacity-85 hover:opacity-100 transition-opacity"
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-[#05050a]/90 via-[#0a0715]/40 to-[#05050a]/90 border-r border-purple-500/20 backdrop-blur-sm rounded-r-2xl pointer-events-none" />
-        <div className="relative z-10 pt-2 pb-1 text-[8px] font-mono tracking-widest uppercase text-cyan-400/80 font-bold rotate-180 write-vertical text-center pointer-events-none">
-          PARTNERS
+    <section
+      id="sponsors"
+      className="w-full py-14 sm:py-18 px-4 bg-[#05040d] border-t border-b border-purple-500/20 text-white overflow-hidden relative z-20 select-none"
+    >
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-purple-900/10 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-6xl mx-auto text-center mb-8 relative z-10">
+        <div className="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-purple-950/80 border border-purple-500/40 text-cyan-300 font-mono text-xs tracking-widest uppercase mb-3 shadow-[0_0_15px_rgba(138,43,226,0.3)] backdrop-blur-md">
+          <Award className="w-3.5 h-3.5 text-amber-400" />
+          <span>COLLABORATIVE ECOSYSTEM</span>
         </div>
-        <div className="relative w-full flex-1 overflow-hidden py-2 pointer-events-auto">
-          <div className="flex flex-col items-center gap-4 animate-marquee-down py-2">
-            {duplicatedItems.map((item, idx) => (
-              <div
-                key={`left-${item.id}-${idx}`}
-                className="group relative w-10 h-10 rounded-xl p-1 bg-black/80 border border-purple-500/30 hover:border-cyan-400 shadow-[0_0_10px_rgba(138,43,226,0.3)] hover:shadow-[0_0_18px_rgba(34,211,238,0.7)] transition-all duration-300 transform hover:scale-110 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
-              >
+
+        <h2 className="text-2xl sm:text-4xl font-extrabold font-mono uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-500 drop-shadow-[0_0_20px_rgba(138,43,226,0.5)]">
+          EVENT SPONSORS, ADVISORS & PARTNERS
+        </h2>
+        <p className="mt-2 text-xs sm:text-sm text-gray-400 font-sans max-w-lg mx-auto">
+          Empowering student innovation and business transformation at Miraethon 2026.
+        </p>
+      </div>
+
+      {/* ── Continuous Horizontal Marquee Loop Moving LEFT → RIGHT ── */}
+      <div className="w-full overflow-hidden relative z-10 py-3">
+        <div className="flex items-center gap-5 sm:gap-8 animate-marquee-right py-2">
+          {duplicatedItems.map((item, idx) => (
+            <div
+              key={`sponsor-loop-${item.id}-${idx}`}
+              className="flex-shrink-0 flex items-center gap-3.5 px-4 py-2.5 rounded-2xl bg-black/80 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_20px_rgba(138,43,226,0.25)] hover:shadow-[0_0_30px_rgba(34,211,238,0.4)] transition-all duration-300 group cursor-pointer"
+            >
+              {/* Slightly Larger Logo Container with White Background */}
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden bg-white p-1 flex items-center justify-center shrink-0 border border-white/20 group-hover:scale-105 transition-transform">
                 <Image
                   src={item.src}
                   alt={item.label}
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-contain rounded-lg filter saturate-110 contrast-105 group-hover:scale-105 transition-transform"
+                  width={56}
+                  height={56}
+                  className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      {/* Right Edge Fixed Vertical Marquee Sidebar */}
-      <aside
-        aria-label="Sponsors and Advisors Right Sidebar"
-        className="fixed right-2 top-28 bottom-12 z-10 hidden xl:flex flex-col items-center overflow-hidden w-14 pointer-events-none select-none opacity-85 hover:opacity-100 transition-opacity"
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-[#05050a]/90 via-[#0a0715]/40 to-[#05050a]/90 border-l border-purple-500/20 backdrop-blur-sm rounded-l-2xl pointer-events-none" />
-        <div className="relative z-10 pt-2 pb-1 text-[8px] font-mono tracking-widest uppercase text-pink-400/80 font-bold rotate-180 write-vertical text-center pointer-events-none">
-          ADVISORS
-        </div>
-        <div className="relative w-full flex-1 overflow-hidden py-2 pointer-events-auto">
-          <div className="flex flex-col items-center gap-4 animate-marquee-up py-2">
-            {duplicatedItems.map((item, idx) => (
-              <div
-                key={`right-${item.id}-${idx}`}
-                className="group relative w-10 h-10 rounded-xl p-1 bg-black/80 border border-pink-500/30 hover:border-pink-400 shadow-[0_0_10px_rgba(255,46,136,0.3)] hover:shadow-[0_0_18px_rgba(255,46,136,0.7)] transition-all duration-300 transform hover:scale-110 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
-              >
-                <Image
-                  src={item.src}
-                  alt={item.label}
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-contain rounded-lg filter saturate-110 contrast-105 group-hover:scale-105 transition-transform"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      {/* ── MOBILE & TABLET IN-FLOW SECTION (< xl screens) ── */}
-      <section className="xl:hidden w-full py-10 px-4 bg-[#070512] border-t border-b border-purple-500/20 text-white overflow-hidden relative z-10">
-        <div className="max-w-4xl mx-auto text-center mb-6">
-          <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/30">
-            EVENT PARTNERS & ADVISORS
-          </span>
-        </div>
-
-        {/* Horizontal Marquee Track for Mobile & Tablet */}
-        <div className="w-full overflow-hidden relative">
-          <div className="flex items-center gap-4 animate-marquee-left py-2">
-            {duplicatedItems.map((item, idx) => (
-              <div
-                key={`mobile-${item.id}-${idx}`}
-                className="flex-shrink-0 flex items-center gap-3 px-4 py-2 rounded-2xl bg-black/80 border border-purple-500/30 shadow-[0_0_15px_rgba(138,43,226,0.25)]"
-              >
-                <div className="w-10 h-10 rounded-xl overflow-hidden bg-black flex items-center justify-center shrink-0">
-                  <Image
-                    src={item.src}
-                    alt={item.label}
-                    width={40}
-                    height={40}
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <span className="text-xs font-mono font-medium text-gray-300 whitespace-nowrap">
+              <div className="flex flex-col text-left">
+                <span className="text-xs sm:text-sm font-mono font-bold text-white group-hover:text-cyan-300 transition-colors whitespace-nowrap">
                   {item.label}
                 </span>
+                <span className="text-[10px] font-mono text-cyan-400/80 uppercase tracking-wider">
+                  MIRAETHON 2026
+                </span>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-      </section>
-    </>
+      </div>
+    </section>
   );
 }

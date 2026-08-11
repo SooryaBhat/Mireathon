@@ -160,6 +160,19 @@
   animation-play-state: paused;
 }
 
+@keyframes marqueeRight {
+  0% { transform: translateX(-50%); }
+  100% { transform: translateX(0%); }
+}
+
+.animate-marquee-right {
+  animation: marqueeRight 25s linear infinite;
+}
+
+.animate-marquee-right:hover {
+  animation-play-state: paused;
+}
+
 .write-vertical {
   writing-mode: vertical-rl;
 }

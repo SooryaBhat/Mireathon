@@ -60,7 +60,7 @@ export default function Footer() {
               <div>
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider">Official Event Date</div>
                 <div className="text-amber-300 font-bold tracking-wider text-xs sm:text-sm">
-                  02/09/2026 <span className="text-gray-400 font-normal text-[10px] ml-1">(2 September 2026)</span>
+                  02/09/2026
                 </div>
               </div>
             </div>
@@ -70,7 +70,7 @@ export default function Footer() {
               <div>
                 <div className="text-[10px] text-gray-400 uppercase tracking-wider">Institution</div>
                 <div className="text-cyan-300 font-bold tracking-wider text-xs">
-                  Srinivas Institute of Technology
+                  Srinivas Institute of Technology, Valachil Mangalore
                 </div>
               </div>
             </div>

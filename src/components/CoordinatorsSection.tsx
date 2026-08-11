@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Phone, MessageSquare, HelpCircle, Sparkles, Compass, Award, Calendar } from "lucide-react";
+import { Phone, MessageSquare, HelpCircle, Sparkles, Award, Calendar } from "lucide-react";
 import VideoBackground from "./VideoBackground";
 
 interface Coordinator {
@@ -20,18 +20,18 @@ const PRIMARY_COORDINATOR: Coordinator = {
   name: "DR. VINAYAK RAO",
   phone: "9739290784",
   displayPhone: "9739 290 784",
-  role: "PRIMARY EVENT COORDINATOR",
+  role: "PRIMARY FACULTY COORDINATOR",
   designation: "Professor",
   department: "Department of Artificial Intelligence and Data Science",
-  institution: "Srinivas Institute of Technology",
+  institution: "Srinivas Institute of Technology, Valachil Mangalore",
   isPrimary: true,
 };
 
 const STUDENT_COORDINATORS: Coordinator[] = [
   {
     name: "CHIRAG",
-    phone: "8277611747",
-    displayPhone: "8277 611 747",
+    phone: "8147876219",
+    displayPhone: "8147 876 219",
     role: "STUDENT COORDINATOR",
   },
   {
@@ -40,13 +40,19 @@ const STUDENT_COORDINATORS: Coordinator[] = [
     displayPhone: "9591 243 710",
     role: "STUDENT COORDINATOR",
   },
+  {
+    name: "NIKHIL",
+    phone: "9019647142",
+    displayPhone: "9019 647 142",
+    role: "STUDENT COORDINATOR",
+  },
 ];
 
 export default function CoordinatorsSection() {
   return (
     <section
       id="contact"
-      className="relative py-28 px-4 sm:px-6 bg-[#05050a] text-white overflow-hidden border-t border-purple-500/20 max-w-full"
+      className="relative py-24 px-4 sm:px-6 bg-[#05050a] text-white overflow-hidden border-t border-purple-500/20 max-w-full"
     >
       {/* Background Video & Particle Layer */}
       <VideoBackground
@@ -60,12 +66,9 @@ export default function CoordinatorsSection() {
       <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-96 h-96 bg-purple-900/20 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-cyan-900/20 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Dimensional Portal Glow Backdrop */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-purple-500/20 bg-gradient-to-tr from-cyan-500/5 via-purple-500/5 to-pink-500/5 blur-xl pointer-events-none animate-pulse" />
-
       <div className="max-w-4xl mx-auto relative z-10">
         {/* Section Header */}
-        <div className="text-center mb-14">
+        <div className="text-center mb-12">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -83,7 +86,7 @@ export default function CoordinatorsSection() {
             transition={{ delay: 0.1 }}
             className="text-3xl sm:text-5xl md:text-6xl font-extrabold font-mono uppercase tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-500 drop-shadow-[0_0_25px_rgba(138,43,226,0.5)]"
           >
-            CONTACT THE COORDINATORS
+            EVENT COORDINATORS
           </motion.h2>
 
           <motion.p
@@ -93,7 +96,7 @@ export default function CoordinatorsSection() {
             transition={{ delay: 0.2 }}
             className="mt-3 max-w-lg mx-auto text-gray-300 font-sans text-xs sm:text-base"
           >
-            For any queries or more details, contact the coordinators.
+            For any queries, squad registration support, or event details, feel free to reach out.
           </motion.p>
         </div>
 
@@ -166,17 +169,17 @@ export default function CoordinatorsSection() {
           </div>
         </motion.div>
 
-        {/* ── 2 & 3. STUDENT COORDINATORS: CHIRAG & VINISH ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-3xl mx-auto mb-16">
+        {/* ── 2, 3 & 4. STUDENT COORDINATORS: CHIRAG, VINISH & NIKHIL ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto mb-14">
           {STUDENT_COORDINATORS.map((coord, idx) => (
             <motion.div
               key={coord.name}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: idx * 0.15 + 0.2 }}
+              transition={{ delay: idx * 0.12 + 0.2 }}
               whileHover={{ y: -4, transition: { duration: 0.2 } }}
-              className="relative group rounded-3xl glass-rift p-6 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_25px_rgba(138,43,226,0.2)] hover:shadow-[0_0_40px_rgba(34,211,238,0.35)] transition-all duration-300 flex flex-col justify-between overflow-hidden bg-black/70"
+              className="relative group rounded-3xl glass-rift p-5 border border-purple-500/30 hover:border-cyan-400/60 shadow-[0_0_25px_rgba(138,43,226,0.2)] hover:shadow-[0_0_40px_rgba(34,211,238,0.35)] transition-all duration-300 flex flex-col justify-between overflow-hidden bg-black/70"
             >
               {/* Sci-Fi Corner Brackets */}
               <div className="absolute top-3 left-3 w-4 h-4 border-t border-l border-cyan-400/50 group-hover:border-cyan-300 transition-colors pointer-events-none" />
@@ -185,28 +188,28 @@ export default function CoordinatorsSection() {
               <div className="absolute bottom-3 right-3 w-4 h-4 border-b border-r border-cyan-400/50 group-hover:border-cyan-300 transition-colors pointer-events-none" />
 
               {/* Card Body */}
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400/90 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/30 font-semibold">
+                  <span className="text-[9px] font-mono tracking-widest uppercase text-cyan-400/90 bg-cyan-950/60 px-2.5 py-0.5 rounded-full border border-cyan-500/30 font-semibold">
                     {coord.role}
                   </span>
-                  <Sparkles className="w-4 h-4 text-purple-400 group-hover:rotate-45 transition-transform" />
+                  <Sparkles className="w-3.5 h-3.5 text-purple-400 group-hover:rotate-45 transition-transform" />
                 </div>
 
-                <h3 className="text-2xl font-extrabold font-mono uppercase tracking-wider text-white group-hover:text-cyan-300 transition-colors">
+                <h3 className="text-xl font-extrabold font-mono uppercase tracking-wider text-white group-hover:text-cyan-300 transition-colors">
                   {coord.name}
                 </h3>
 
-                <p className="text-lg font-mono font-semibold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300">
+                <p className="text-base font-mono font-semibold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 to-purple-300">
                   +91 {coord.displayPhone}
                 </p>
               </div>
 
               {/* Action Buttons */}
-              <div className="pt-5 mt-5 border-t border-white/10 flex items-center gap-3">
+              <div className="pt-4 mt-4 border-t border-white/10 flex items-center gap-2">
                 <a
                   href={`tel:${coord.phone}`}
-                  className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(138,43,226,0.4)] group/btn transition-all"
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-500 hover:to-cyan-500 text-white font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 shadow-[0_0_15px_rgba(138,43,226,0.4)] group/btn transition-all"
                 >
                   <Phone className="w-3.5 h-3.5 text-cyan-300 group-hover/btn:scale-110 transition-transform" />
                   <span>CALL</span>
@@ -216,7 +219,7 @@ export default function CoordinatorsSection() {
                   href={`https://wa.me/91${coord.phone}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="py-2.5 px-3 rounded-xl bg-black/60 border border-purple-500/40 hover:border-emerald-400 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-2 transition-colors"
+                  className="py-2.5 px-3 rounded-xl bg-black/60 border border-purple-500/40 hover:border-emerald-400 text-emerald-400 hover:text-emerald-300 font-mono text-xs font-bold tracking-wider uppercase flex items-center justify-center gap-1.5 transition-colors"
                   title={`Chat on WhatsApp with ${coord.name}`}
                 >
                   <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
@@ -227,27 +230,17 @@ export default function CoordinatorsSection() {
           ))}
         </div>
 
-        {/* Final Branding Message (Hero Connection) */}
+        {/* Final Event Date Banner */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="text-center pt-8 border-t border-purple-500/20 space-y-3 font-mono"
+          transition={{ delay: 0.3 }}
+          className="text-center pt-6 border-t border-purple-500/20 space-y-2 font-mono"
         >
-          <div className="inline-flex items-center gap-2 text-cyan-400/90 text-xs tracking-[0.25em] uppercase">
+          <div className="inline-flex items-center gap-2 text-cyan-400/90 text-xs sm:text-sm tracking-[0.25em] uppercase font-bold">
             <Calendar className="w-4 h-4 text-amber-400" />
-            <span>EVENT DATE: <span className="text-amber-300 font-bold">02/09/2026</span> (2 SEPTEMBER 2026)</span>
-          </div>
-
-          <h3 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight uppercase text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-500 drop-shadow-[0_0_20px_rgba(138,43,226,0.5)]">
-            MIRAETHON 2026
-          </h3>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-6 text-xs sm:text-sm tracking-[0.2em] font-bold text-gray-300 uppercase">
-            <span className="text-amber-300">AI MEETS BUSINESS</span>
-            <span className="hidden sm:inline text-purple-500">//</span>
-            <span className="text-cyan-300">CREATIVITY AT THE EVEREST</span>
+            <span>OFFICIAL EVENT DATE: <span className="text-amber-300 font-extrabold text-sm sm:text-base">02/09/2026</span></span>
           </div>
         </motion.div>
       </div>
