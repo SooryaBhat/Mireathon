@@ -85,10 +85,10 @@ export default function InstitutionalBranding() {
 
       {/* ── Department Name ── */}
       <span
-        className="text-[8px] xs:text-[9px] sm:text-[11px] md:text-[12px] tracking-[0.12em] sm:tracking-[0.16em] font-mono uppercase font-extrabold text-cyan-300 leading-tight text-center max-w-full mt-0.5 drop-shadow-[0_2px_8px_rgba(0,0,0,1)]"
+        className="text-[9.5px] xs:text-[11px] sm:text-[13.5px] md:text-[15px] tracking-[0.12em] sm:tracking-[0.16em] font-mono uppercase font-extrabold leading-tight text-center max-w-full mt-1"
         style={{
-          color: "#67e8f9",
-          textShadow: "0 0 14px rgba(0,0,0,1), 0 0 25px rgba(34,211,238,0.7)",
+          color: "#a5f3fc",
+          textShadow: "0 0 18px rgba(0,0,0,1), 0 0 25px rgba(34,211,238,0.6), 0 2px 8px rgba(0,0,0,1)",
         }}
       >
         DEPARTMENT OF ARTIFICIAL INTELLIGENCE AND DATA SCIENCE
