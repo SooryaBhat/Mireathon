@@ -5,11 +5,6 @@ import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { Sparkles, MeshWobbleMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-/*
- * Experimental mobile desktop-style visual mode.
- * Easy to remove if not approved.
- */
-
 // 3D Moving Sci-Fi City Mesh Plane with Interactive Parallax & Wave Motion
 function MovingHero3DPlane({
   mouse,
@@ -146,7 +141,7 @@ export default function Hero3DCanvas() {
       // Adjust FOV on mobile portrait viewports so full 3D plane fills screen edge-to-edge
       if (typeof window !== "undefined") {
         if (window.innerWidth < 768) {
-          setCameraFov(64);
+          setCameraFov(68);
         } else {
           setCameraFov(50);
         }
@@ -172,19 +167,10 @@ export default function Hero3DCanvas() {
     mouse.current.y = -(e.clientY / innerHeight) * 2 + 1;
   };
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (typeof window === "undefined" || !e.touches[0]) return;
-    const { innerWidth, innerHeight } = window;
-    const touch = e.touches[0];
-    mouse.current.x = (touch.clientX / innerWidth) * 2 - 1;
-    mouse.current.y = -(touch.clientY / innerHeight) * 2 + 1;
-  };
-
   return (
     <div
       onPointerMove={handlePointerMove}
-      onTouchMove={handleTouchMove}
-      className="absolute inset-0 w-full h-full pointer-events-auto select-none hero-mobile-desktop-style-canvas"
+      className="absolute inset-0 w-full h-full pointer-events-auto select-none"
     >
       <Canvas
         camera={{ position: [0, 0, 6.2], fov: cameraFov }}
