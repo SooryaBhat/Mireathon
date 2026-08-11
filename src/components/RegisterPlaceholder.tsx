@@ -184,7 +184,7 @@ export default function RegisterPlaceholder() {
                 className="w-full px-4 py-3 rounded-xl bg-black/60 border border-white/10 text-gray-400 focus:outline-none"
               >
                 <option>Select Track Dimension...</option>
-                <option>1. Retail & Reality (Gold)</option>
+                <option>1. Retail & Real Estate (Gold)</option>
                 <option>2. Finance & Investments (Green)</option>
                 <option>3. Health & Wellness (Teal)</option>
                 <option>4. Travel & Food (Coral)</option>

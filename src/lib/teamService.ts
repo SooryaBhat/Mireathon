@@ -48,15 +48,15 @@ export interface HackathonSettings {
 export const THEME_TRACKS: ThemeTrack[] = [
   {
     id: "track-1",
-    name: "01 — RETAIL & REALITY",
-    slug: "retail-reality",
+    name: "01 — RETAIL & REAL ESTATE",
+    slug: "retail-real-estate",
     description: "Augmented Shopping & Spatial Commerce",
     image_url: "/New_images/Retail.png",
   },
   {
     id: "track-2",
-    name: "02 — FINANCIAL & INVESTMENTS",
-    slug: "financial-investments",
+    name: "02 — FINANCE & INVESTMENTS",
+    slug: "finance-investments",
     description: "Decentralized Wealth & Smart Fintech",
     image_url: "/New_images/finance.png",
   },

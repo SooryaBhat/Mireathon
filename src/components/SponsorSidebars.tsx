@@ -25,27 +25,27 @@ export default function SponsorSidebars() {
   return (
     <>
       {/* ── DESKTOP ONLY: Fixed Left & Right Vertical Sidebars (lg+ screens) ── */}
-      {/* Left Edge Fixed Vertical Marquee Sidebar */}
+      {/* Left Edge Fixed Vertical Marquee Sidebar (z-10, low opacity, pointer pass-through except icons) */}
       <aside
         aria-label="Sponsors and Advisors Left Sidebar"
-        className="fixed left-3 top-24 bottom-12 z-30 hidden lg:flex flex-col items-center overflow-hidden w-16 pointer-events-auto select-none"
+        className="fixed left-2 top-28 bottom-12 z-10 hidden xl:flex flex-col items-center overflow-hidden w-14 pointer-events-none select-none opacity-85 hover:opacity-100 transition-opacity"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-[#05050a]/90 via-[#0a0715]/40 to-[#05050a]/90 border-r border-purple-500/20 backdrop-blur-sm rounded-r-2xl pointer-events-none" />
-        <div className="relative z-10 pt-2 pb-1 text-[9px] font-mono tracking-widest uppercase text-cyan-400/80 font-bold rotate-180 write-vertical text-center pointer-events-none">
+        <div className="relative z-10 pt-2 pb-1 text-[8px] font-mono tracking-widest uppercase text-cyan-400/80 font-bold rotate-180 write-vertical text-center pointer-events-none">
           PARTNERS
         </div>
-        <div className="relative w-full flex-1 overflow-hidden py-2">
+        <div className="relative w-full flex-1 overflow-hidden py-2 pointer-events-auto">
           <div className="flex flex-col items-center gap-4 animate-marquee-down py-2">
             {duplicatedItems.map((item, idx) => (
               <div
                 key={`left-${item.id}-${idx}`}
-                className="group relative w-12 h-12 rounded-xl p-1 bg-black/80 border border-purple-500/30 hover:border-cyan-400 shadow-[0_0_12px_rgba(138,43,226,0.3)] hover:shadow-[0_0_20px_rgba(34,211,238,0.7)] transition-all duration-300 transform hover:scale-110 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
+                className="group relative w-10 h-10 rounded-xl p-1 bg-black/80 border border-purple-500/30 hover:border-cyan-400 shadow-[0_0_10px_rgba(138,43,226,0.3)] hover:shadow-[0_0_18px_rgba(34,211,238,0.7)] transition-all duration-300 transform hover:scale-110 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
               >
                 <Image
                   src={item.src}
                   alt={item.label}
-                  width={44}
-                  height={44}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-contain rounded-lg filter saturate-110 contrast-105 group-hover:scale-105 transition-transform"
                 />
               </div>
@@ -57,24 +57,24 @@ export default function SponsorSidebars() {
       {/* Right Edge Fixed Vertical Marquee Sidebar */}
       <aside
         aria-label="Sponsors and Advisors Right Sidebar"
-        className="fixed right-3 top-24 bottom-12 z-30 hidden lg:flex flex-col items-center overflow-hidden w-16 pointer-events-auto select-none"
+        className="fixed right-2 top-28 bottom-12 z-10 hidden xl:flex flex-col items-center overflow-hidden w-14 pointer-events-none select-none opacity-85 hover:opacity-100 transition-opacity"
       >
         <div className="absolute inset-0 bg-gradient-to-b from-[#05050a]/90 via-[#0a0715]/40 to-[#05050a]/90 border-l border-purple-500/20 backdrop-blur-sm rounded-l-2xl pointer-events-none" />
-        <div className="relative z-10 pt-2 pb-1 text-[9px] font-mono tracking-widest uppercase text-pink-400/80 font-bold write-vertical text-center pointer-events-none">
+        <div className="relative z-10 pt-2 pb-1 text-[8px] font-mono tracking-widest uppercase text-pink-400/80 font-bold rotate-180 write-vertical text-center pointer-events-none">
           ADVISORS
         </div>
-        <div className="relative w-full flex-1 overflow-hidden py-2">
+        <div className="relative w-full flex-1 overflow-hidden py-2 pointer-events-auto">
           <div className="flex flex-col items-center gap-4 animate-marquee-up py-2">
             {duplicatedItems.map((item, idx) => (
               <div
                 key={`right-${item.id}-${idx}`}
-                className="group relative w-12 h-12 rounded-xl p-1 bg-black/80 border border-pink-500/30 hover:border-pink-400 shadow-[0_0_12px_rgba(255,46,136,0.3)] hover:shadow-[0_0_20px_rgba(255,46,136,0.7)] transition-all duration-300 transform hover:scale-110 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
+                className="group relative w-10 h-10 rounded-xl p-1 bg-black/80 border border-pink-500/30 hover:border-pink-400 shadow-[0_0_10px_rgba(255,46,136,0.3)] hover:shadow-[0_0_18px_rgba(255,46,136,0.7)] transition-all duration-300 transform hover:scale-110 cursor-pointer overflow-hidden flex items-center justify-center shrink-0"
               >
                 <Image
                   src={item.src}
                   alt={item.label}
-                  width={44}
-                  height={44}
+                  width={40}
+                  height={40}
                   className="w-full h-full object-contain rounded-lg filter saturate-110 contrast-105 group-hover:scale-105 transition-transform"
                 />
               </div>
@@ -83,15 +83,15 @@ export default function SponsorSidebars() {
         </div>
       </aside>
 
-      {/* ── MOBILE & TABLET IN-FLOW SECTION (< lg screens) ── */}
-      <section className="lg:hidden w-full py-10 px-4 bg-[#070512] border-t border-b border-purple-500/20 text-white overflow-hidden relative">
+      {/* ── MOBILE & TABLET IN-FLOW SECTION (< xl screens) ── */}
+      <section className="xl:hidden w-full py-10 px-4 bg-[#070512] border-t border-b border-purple-500/20 text-white overflow-hidden relative z-10">
         <div className="max-w-4xl mx-auto text-center mb-6">
           <span className="text-[10px] font-mono tracking-widest uppercase text-cyan-400 bg-cyan-950/60 px-3 py-1 rounded-full border border-cyan-500/30">
             EVENT PARTNERS & ADVISORS
           </span>
         </div>
 
-        {/* Horizontal Marquee Track for Mobile */}
+        {/* Horizontal Marquee Track for Mobile & Tablet */}
         <div className="w-full overflow-hidden relative">
           <div className="flex items-center gap-4 animate-marquee-left py-2">
             {duplicatedItems.map((item, idx) => (

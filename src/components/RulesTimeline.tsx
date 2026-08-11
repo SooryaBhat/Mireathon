@@ -63,7 +63,7 @@ const OBJECTIVES: RuleObjective[] = [
       "Submissions will be evaluated by the judging panel across the six hackathon tracks.",
       "Evaluated on Innovation, Business Relevance, Technical Feasibility, and Presentation Impact.",
       "The strongest teams across all domain tracks will be shortlisted for the next stage.",
-      "Tracks: 01 Retail & Reality, 02 Financial & Investments, 03 Health & Wellness, 04 Travel & Food, 05 Sports & Fitness, 06 Music & OTT.",
+      "Tracks: 01 Retail & Real Estate, 02 Finance & Investments, 03 Health & Wellness, 04 Travel & Food, 05 Sports & Fitness, 06 Music & OTT.",
     ],
   },
   {
