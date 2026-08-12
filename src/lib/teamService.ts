@@ -44,7 +44,7 @@ export interface HackathonSettings {
   max_team_size: number;
 }
 
-// Default 6 Theme Tracks
+// Default fallback themes metadata
 export const THEME_TRACKS: ThemeTrack[] = [
   {
     id: "track-1",
@@ -100,14 +100,42 @@ export function generateTeamCode(): string {
   return code;
 }
 
-// 1. Fetch Hackathon Settings from Remote Supabase Database
+// Helper: Check if string is a valid UUID
+export function isUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+}
+
+// 0. Fetch Real Active Themes with Supabase Database UUIDs
+export async function fetchThemes(): Promise<ThemeTrack[]> {
+  try {
+    const { data, error } = await supabase
+      .from("themes")
+      .select("*")
+      .eq("is_active", true);
+
+    if (data && data.length > 0 && !error) {
+      return data.map((t: any) => ({
+        id: t.id, // REAL Supabase Database UUID
+        name: t.name,
+        slug: t.slug,
+        description: t.description || "",
+        image_url: t.image_url || "/New_images/Retail.png",
+      }));
+    }
+  } catch (err) {
+    console.warn("Themes fetch fallback:", err);
+  }
+  return THEME_TRACKS;
+}
+
+// 1. Fetch Hackathon Settings from Remote Supabase Database (Using maybeSingle to prevent 406 errors)
 export async function getHackathonSettings(): Promise<HackathonSettings> {
   try {
     const { data, error } = await supabase
       .from("hackathon_settings")
       .select("*")
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (data && !error) {
       return {
@@ -118,7 +146,7 @@ export async function getHackathonSettings(): Promise<HackathonSettings> {
       };
     }
   } catch (err) {
-    // Return default if table not yet initialized
+    // Return default if table not initialized
   }
 
   return {
@@ -129,14 +157,14 @@ export async function getHackathonSettings(): Promise<HackathonSettings> {
   };
 }
 
-// 2. REAL Supabase Student Sign Up (NO email verification required)
+// 2. REAL Supabase Student Sign Up
 export async function signUpStudent(
   fullName: string,
   email: string,
   pass: string
 ): Promise<{ user: any; profile: Profile | null; error?: string }> {
   try {
-    // Server-side / Database check: verify registration is open
+    // Server-side check: verify registration is open
     const settings = await getHackathonSettings();
     if (!settings.registration_open) {
       return { user: null, profile: null, error: "Registrations for Miraethon 2026 are closed." };
@@ -164,19 +192,24 @@ export async function signUpStudent(
       id: user.id,
       full_name: fullName,
       email,
-      role: "student", // Strictly enforced student role
+      role: "student",
     };
 
-    // Upsert into remote public.profiles table
-    const { error: profErr } = await supabase.from("profiles").upsert(newProfile);
-    if (profErr) {
-      console.warn("Profile table insert notice:", profErr.message);
+    // Update profile (which was automatically inserted by handle_new_user trigger)
+    const { error: updateErr } = await supabase
+      .from("profiles")
+      .update({ full_name: fullName, email, role: "student" })
+      .eq("id", user.id);
+
+    if (updateErr) {
+      // Fallback upsert if trigger didn't fire
+      const { error: upsertErr } = await supabase.from("profiles").upsert(newProfile);
+      if (upsertErr) {
+        console.warn("Profile table insert notice:", upsertErr.message);
+      }
     }
 
-    // Check if we got a session (email confirmation must be OFF for immediate login)
     if (!authData.session) {
-      // Account was created but email confirmation is still enabled in Supabase.
-      // The user is in auth.users but cannot log in until they verify email.
       return {
         user: null,
         profile: null,
@@ -212,12 +245,12 @@ export async function signInStudent(
     const user = data.user;
     if (!user) return { user: null, profile: null, error: "User session not found." };
 
-    // Fetch profile from remote Supabase table
+    // Fetch profile using maybeSingle to avoid 406 errors
     const { data: profData } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
-      .single();
+      .maybeSingle();
 
     const profile: Profile = profData || {
       id: user.id,
@@ -236,7 +269,7 @@ export async function signInStudent(
 export async function createTeam(
   leaderId: string,
   teamName: string,
-  themeId: string
+  themeIdOrSlug: string
 ): Promise<{ team: Team | null; error?: string }> {
   try {
     // Check registration deadline
@@ -245,48 +278,106 @@ export async function createTeam(
       return { team: null, error: "Registrations are closed. New teams cannot be created." };
     }
 
-    // Check if user is already in a team
+    // Check if user is already in a team (using maybeSingle to prevent 406)
     const { data: existingMember } = await supabase
       .from("team_members")
       .select("team_id")
       .eq("user_id", leaderId)
-      .single();
+      .maybeSingle();
 
     if (existingMember) {
       return { team: null, error: "You are already part of a team." };
     }
 
+    // Resolve real Database UUID for theme
+    let realThemeUuid: string | null = null;
+
+    if (isUUID(themeIdOrSlug)) {
+      realThemeUuid = themeIdOrSlug;
+    } else {
+      // Look up theme UUID by slug or index mapping
+      const { data: foundTheme } = await supabase
+        .from("themes")
+        .select("id")
+        .or(`slug.eq.${themeIdOrSlug},id.eq.${themeIdOrSlug}`)
+        .maybeSingle();
+
+      if (foundTheme?.id) {
+        realThemeUuid = foundTheme.id;
+      } else {
+        // Find matching theme by index or slug fallback
+        const themes = await fetchThemes();
+        const matched = themes.find(
+          (t) => t.id === themeIdOrSlug || t.slug === themeIdOrSlug || isUUID(t.id)
+        );
+
+        if (matched && isUUID(matched.id)) {
+          realThemeUuid = matched.id;
+        } else if (themes.length > 0 && isUUID(themes[0].id)) {
+          realThemeUuid = themes[0].id;
+        }
+      }
+    }
+
+    if (!realThemeUuid || !isUUID(realThemeUuid)) {
+      // Fetch first active theme UUID from database
+      const { data: firstDbTheme } = await supabase
+        .from("themes")
+        .select("id")
+        .eq("is_active", true)
+        .limit(1)
+        .maybeSingle();
+
+      if (firstDbTheme?.id && isUUID(firstDbTheme.id)) {
+        realThemeUuid = firstDbTheme.id;
+      }
+    }
+
+    if (!realThemeUuid || !isUUID(realThemeUuid)) {
+      return { team: null, error: "Unable to create your squad right now. Selected theme is invalid." };
+    }
+
     const teamCode = generateTeamCode();
 
+    // Insert into public.teams table
     const { data: teamData, error: teamErr } = await supabase
       .from("teams")
       .insert({
         team_code: teamCode,
-        team_name: teamName,
+        team_name: teamName.trim(),
         leader_id: leaderId,
-        theme_id: themeId,
+        theme_id: realThemeUuid, // Real Supabase Database UUID!
         status: "registered",
       })
       .select()
       .single();
 
     if (teamErr) {
+      console.error("Supabase team insert error:", teamErr);
       if (teamErr.message.includes("team_name") || teamErr.code === "23505") {
-        return { team: null, error: "Team name already taken. Please choose another." };
+        return { team: null, error: "Team name already taken. Please choose another name." };
       }
-      return { team: null, error: teamErr.message };
+      return { team: null, error: "Unable to create your squad right now. Please try again." };
     }
 
     // Insert Leader as first member with member_role = 'leader'
-    await supabase.from("team_members").insert({
+    const { error: memberErr } = await supabase.from("team_members").insert({
       team_id: teamData.id,
       user_id: leaderId,
       member_role: "leader",
     });
 
+    if (memberErr) {
+      console.error("Supabase leader member insert error:", memberErr);
+      // Clean up orphaned team record
+      await supabase.from("teams").delete().eq("id", teamData.id);
+      return { team: null, error: "Failed to finalize squad membership. Please try again." };
+    }
+
     return { team: teamData };
   } catch (err: any) {
-    return { team: null, error: err.message || "Failed to create team in Supabase." };
+    console.error("createTeam unexpected error:", err);
+    return { team: null, error: err.message || "Unable to create your squad right now. Please try again." };
   }
 }
 
@@ -304,23 +395,23 @@ export async function joinTeamByCode(
       return { team: null, memberCount: 0, error: "Registrations are closed." };
     }
 
-    // Check if user is already in a team
+    // Check if user is already in a team (using maybeSingle)
     const { data: existingMember } = await supabase
       .from("team_members")
       .select("team_id")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     if (existingMember) {
       return { team: null, memberCount: 0, error: "You are already part of a team." };
     }
 
-    // Find team by code
+    // Find team by code (using maybeSingle to prevent 406)
     const { data: team, error: teamErr } = await supabase
       .from("teams")
       .select("*")
       .eq("team_code", cleanCode)
-      .single();
+      .maybeSingle();
 
     if (teamErr || !team) {
       return { team: null, memberCount: 0, error: "Team not found. Check the code and try again." };
@@ -366,7 +457,7 @@ export async function getUserTeam(userId: string): Promise<{
       .from("team_members")
       .select("team_id")
       .eq("user_id", userId)
-      .single();
+      .maybeSingle();
 
     if (!membership) {
       return { team: null, members: [] };
@@ -376,7 +467,7 @@ export async function getUserTeam(userId: string): Promise<{
       .from("teams")
       .select("*")
       .eq("id", membership.team_id)
-      .single();
+      .maybeSingle();
 
     if (!team) return { team: null, members: [] };
 
@@ -398,7 +489,8 @@ export async function getUserTeam(userId: string): Promise<{
       },
     }));
 
-    const theme = THEME_TRACKS.find((t) => t.id === team.theme_id || t.slug === team.theme_id);
+    const allThemes = await fetchThemes();
+    const theme = allThemes.find((t) => t.id === team.theme_id || t.slug === team.theme_id);
 
     return { team, members, theme };
   } catch (err: any) {

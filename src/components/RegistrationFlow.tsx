@@ -29,6 +29,7 @@ import {
   joinTeamByCode,
   getUserTeam,
   getHackathonSettings,
+  fetchThemes,
 } from "@/lib/teamService";
 
 type Step =
@@ -68,10 +69,18 @@ export default function RegistrationFlow() {
   const [errorMsg, setErrorMsg] = useState("");
   const [copiedCode, setCopiedCode] = useState(false);
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [dbThemes, setDbThemes] = useState<ThemeTrack[]>(THEME_TRACKS);
 
   useEffect(() => {
     getHackathonSettings().then((s) => {
       setIsRegistrationOpen(s.registration_open);
+    });
+    fetchThemes().then((fetched) => {
+      if (fetched && fetched.length > 0) {
+        setDbThemes(fetched);
+        // Default selected track to real database UUID theme
+        setSelectedTrack(fetched[0]);
+      }
     });
   }, []);
 
@@ -616,8 +625,8 @@ export default function RegistrationFlow() {
                     </label>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                      {THEME_TRACKS.map((track) => {
-                        const isSelected = selectedTrack.id === track.id;
+                      {dbThemes.map((track) => {
+                        const isSelected = selectedTrack.id === track.id || selectedTrack.slug === track.slug;
                         return (
                           <div
                             key={track.id}
