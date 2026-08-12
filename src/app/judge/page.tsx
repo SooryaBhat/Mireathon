@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Award,
@@ -28,8 +29,10 @@ import {
   saveJudgeEvaluation,
 } from "@/lib/evaluationService";
 import { getSubmissionSignedUrl } from "@/lib/submissionService";
+import { getCurrentUserProfile, signInStudent } from "@/lib/teamService";
 
 export default function JudgePage() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -66,27 +69,22 @@ export default function JudgePage() {
   useEffect(() => {
     async function checkAuth() {
       setAuthLoading(true);
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user || null;
+      const res = await getCurrentUserProfile();
 
-      if (user) {
-        setCurrentUser(user);
-        // Fetch profile role
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        setProfile(prof || null);
-        if (prof?.role === "judge" || prof?.role === "admin") {
-          loadSubmissions(user.id, selectedTrack, selectedStatus);
+      if (res.user && res.profile) {
+        if (res.role === "judge" || res.role === "admin") {
+          setCurrentUser(res.user);
+          setProfile(res.profile);
+          loadSubmissions(res.user.id, selectedTrack, selectedStatus);
+        } else {
+          // Student role attempting to access /judge -> Redirect to home page
+          router.push("/");
         }
       }
       setAuthLoading(false);
     }
     checkAuth();
-  }, []);
+  }, [router]);
 
   // Reload submissions when filters change
   const loadSubmissions = async (judgeId: string, track: string, status: string) => {
@@ -118,38 +116,25 @@ export default function JudgePage() {
     setLoginError("");
     setIsSubmittingAuth(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginEmail.trim(),
-      password: loginPassword,
-    });
-
+    const res = await signInStudent(loginEmail.trim(), loginPassword);
     setIsSubmittingAuth(false);
 
-    if (error || !data.user) {
-      setLoginError("Invalid judge credentials. Please try again.");
+    if (res.error || !res.user || !res.profile) {
+      setLoginError(res.error || "Invalid credentials. Please try again.");
       return;
     }
 
-    const user = data.user;
-    setCurrentUser(user);
-
-    // Verify role
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!prof || (prof.role !== "judge" && prof.role !== "admin")) {
-      setLoginError("Unauthorized access: You do not have Judge permissions.");
+    if (res.role !== "judge" && res.role !== "admin") {
+      setLoginError("Unauthorized access: Student accounts cannot access the Judge Portal.");
       setProfile(null);
       await supabase.auth.signOut();
       setCurrentUser(null);
       return;
     }
 
-    setProfile(prof);
-    loadSubmissions(user.id, selectedTrack, selectedStatus);
+    setCurrentUser(res.user);
+    setProfile(res.profile);
+    loadSubmissions(res.user.id, selectedTrack, selectedStatus);
   };
 
   // Handle Sign Out

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -38,6 +39,7 @@ import {
   getHackathonSettings,
   fetchThemes,
   isDeadlinePassed,
+  getCurrentUserProfile,
 } from "@/lib/teamService";
 import {
   Submission,
@@ -57,6 +59,7 @@ type Step =
   | "DASHBOARD";
 
 export default function RegistrationFlow() {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("CHOICE");
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
@@ -115,7 +118,30 @@ export default function RegistrationFlow() {
         setSelectedTrack(fetched[0]);
       }
     });
-  }, []);
+
+    // Initial Auth & Role Check directly from database (Single Source of Truth)
+    getCurrentUserProfile().then(async (res) => {
+      if (res.user && res.profile) {
+        setCurrentUser(res.user);
+        setCurrentProfile(res.profile);
+
+        if (res.role === "admin") {
+          router.push("/admin");
+        } else if (res.role === "judge") {
+          router.push("/judge");
+        } else {
+          // Student role -> Check squad membership
+          const teamRes = await getUserTeam(res.user.id);
+          if (teamRes.team) {
+            setActiveTeam(teamRes.team);
+            setTeamMembers(teamRes.members);
+            setActiveTheme(teamRes.theme || THEME_TRACKS[0]);
+            setStep("DASHBOARD");
+          }
+        }
+      }
+    });
+  }, [router]);
 
   // Fetch Team Submission & Results whenever active team changes
   const loadSubmissionData = async (teamId: string) => {
@@ -189,18 +215,25 @@ export default function RegistrationFlow() {
       setCurrentUser(res.user);
       setCurrentProfile(res.profile);
 
-      // Check if user is already in a team
-      setLoading(true);
-      const teamRes = await getUserTeam(res.user.id);
-      setLoading(false);
-
-      if (teamRes.team) {
-        setActiveTeam(teamRes.team);
-        setTeamMembers(teamRes.members);
-        setActiveTheme(teamRes.theme || THEME_TRACKS[0]);
-        setStep("DASHBOARD");
+      // Route based on Database Profile Role (Single Source of Truth)
+      if (res.role === "admin") {
+        router.push("/admin");
+      } else if (res.role === "judge") {
+        router.push("/judge");
       } else {
-        setStep("TEAM_CHOICE");
+        // Student role -> Check squad membership
+        setLoading(true);
+        const teamRes = await getUserTeam(res.user.id);
+        setLoading(false);
+
+        if (teamRes.team) {
+          setActiveTeam(teamRes.team);
+          setTeamMembers(teamRes.members);
+          setActiveTheme(teamRes.theme || THEME_TRACKS[0]);
+          setStep("DASHBOARD");
+        } else {
+          setStep("TEAM_CHOICE");
+        }
       }
     }
   };

@@ -290,11 +290,72 @@ export async function signUpStudent(
   }
 }
 
-// 3. REAL Supabase Student Sign In
+// Central Reusable Auth & Profile Helper (Single Source of Truth from public.profiles table)
+export async function getCurrentUserProfile(): Promise<{
+  user: any | null;
+  profile: Profile | null;
+  role: "student" | "judge" | "admin" | null;
+  error?: string;
+}> {
+  try {
+    const { data: authData, error: authErr } = await supabase.auth.getUser();
+
+    if (authErr || !authData?.user) {
+      return { user: null, profile: null, role: null };
+    }
+
+    const user = authData.user;
+
+    // Direct database fetch from public.profiles table
+    const { data: profData, error: profErr } = await supabase
+      .from("profiles")
+      .select("id, full_name, email, role, phone, usn, branch, semester")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (profErr || !profData) {
+      console.warn("Profile database lookup notice:", profErr?.message);
+      const fallbackProfile: Profile = {
+        id: user.id,
+        full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+        email: user.email || "",
+        role: "student",
+      };
+      return { user, profile: fallbackProfile, role: "student" };
+    }
+
+    // Parse role safely from public.profiles
+    const rawRole = String(profData.role || "student").toLowerCase().trim();
+    const validRole: "student" | "judge" | "admin" =
+      rawRole === "admin" ? "admin" : rawRole === "judge" ? "judge" : "student";
+
+    const profile: Profile = {
+      id: profData.id,
+      full_name: profData.full_name || user.email?.split("@")[0] || "User",
+      email: profData.email || user.email || "",
+      phone: profData.phone,
+      usn: profData.usn,
+      branch: profData.branch,
+      semester: profData.semester,
+      role: validRole,
+    };
+
+    return {
+      user,
+      profile,
+      role: validRole,
+    };
+  } catch (err: any) {
+    console.error("getCurrentUserProfile unexpected error:", err);
+    return { user: null, profile: null, role: null, error: err.message };
+  }
+}
+
+// 3. REAL Supabase Sign In (Returns User, Profile & Verified Database Role)
 export async function signInStudent(
   email: string,
   pass: string
-): Promise<{ user: any; profile: Profile | null; error?: string }> {
+): Promise<{ user: any; profile: Profile | null; role: "student" | "judge" | "admin" | null; error?: string }> {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -302,29 +363,22 @@ export async function signInStudent(
     });
 
     if (error) {
-      return { user: null, profile: null, error: "Incorrect email or password." };
+      return { user: null, profile: null, role: null, error: "Incorrect email or password." };
     }
 
     const user = data.user;
-    if (!user) return { user: null, profile: null, error: "User session not found." };
+    if (!user) return { user: null, profile: null, role: null, error: "User session not found." };
 
-    // Fetch profile using maybeSingle to avoid 406 errors
-    const { data: profData } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
+    // Single source of truth from public.profiles table
+    const profileRes = await getCurrentUserProfile();
 
-    const profile: Profile = profData || {
-      id: user.id,
-      full_name: user.user_metadata?.full_name || email.split("@")[0],
-      email: user.email || email,
-      role: "student",
+    return {
+      user: profileRes.user || user,
+      profile: profileRes.profile,
+      role: profileRes.role || "student",
     };
-
-    return { user, profile };
   } catch (err: any) {
-    return { user: null, profile: null, error: err.message || "Login failed." };
+    return { user: null, profile: null, role: null, error: err.message || "Login failed." };
   }
 }
 

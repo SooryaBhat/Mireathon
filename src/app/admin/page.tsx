@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Award,
@@ -32,8 +33,10 @@ import {
   toggleResultsPublication,
 } from "@/lib/adminService";
 import { getSubmissionSignedUrl } from "@/lib/submissionService";
+import { getCurrentUserProfile, signInStudent } from "@/lib/teamService";
 
 export default function AdminPage() {
+  const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -70,26 +73,23 @@ export default function AdminPage() {
   useEffect(() => {
     async function checkAuth() {
       setAuthLoading(true);
-      const { data: sessionData } = await supabase.auth.getSession();
-      const user = sessionData?.session?.user || null;
+      const res = await getCurrentUserProfile();
 
-      if (user) {
-        setCurrentUser(user);
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        setProfile(prof || null);
-        if (prof?.role === "admin") {
+      if (res.user && res.profile) {
+        if (res.role === "admin") {
+          setCurrentUser(res.user);
+          setProfile(res.profile);
           loadDashboardData();
+        } else if (res.role === "judge") {
+          router.push("/judge");
+        } else {
+          router.push("/");
         }
       }
       setAuthLoading(false);
     }
     checkAuth();
-  }, []);
+  }, [router]);
 
   const loadDashboardData = async () => {
     setLoadingStats(true);
@@ -107,36 +107,24 @@ export default function AdminPage() {
     setLoginError("");
     setIsSubmittingAuth(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: loginEmail.trim(),
-      password: loginPassword,
-    });
-
+    const res = await signInStudent(loginEmail.trim(), loginPassword);
     setIsSubmittingAuth(false);
 
-    if (error || !data.user) {
-      setLoginError("Invalid admin credentials. Please try again.");
+    if (res.error || !res.user || !res.profile) {
+      setLoginError(res.error || "Invalid credentials. Please try again.");
       return;
     }
 
-    const user = data.user;
-    setCurrentUser(user);
-
-    const { data: prof } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    if (!prof || prof.role !== "admin") {
-      setLoginError("Unauthorized: You do not have Admin permissions.");
+    if (res.role !== "admin") {
+      setLoginError("Unauthorized access: You do not have Admin permissions.");
       setProfile(null);
       await supabase.auth.signOut();
       setCurrentUser(null);
       return;
     }
 
-    setProfile(prof);
+    setCurrentUser(res.user);
+    setProfile(res.profile);
     loadDashboardData();
   };
 
