@@ -39,9 +39,19 @@ export interface TeamMember {
 
 export interface HackathonSettings {
   registration_open: boolean;
+  submission_open: boolean;
+  results_published: boolean;
+  top_shortlist_per_track: number;
   registration_deadline: string;
   min_team_size: number;
   max_team_size: number;
+}
+
+// Helper: Check if single source of truth deadline (28 August 2026 Asia/Kolkata) has passed
+export function isDeadlinePassed(deadlineIso?: string): boolean {
+  const deadlineStr = deadlineIso || "2026-08-28T23:59:59+05:30";
+  const deadlineMs = new Date(deadlineStr).getTime();
+  return Date.now() > deadlineMs;
 }
 
 // Default 6 Official Theme Tracks (Slugs as Fallback IDs - No Artificial track-1 strings)
@@ -187,7 +197,10 @@ export async function getHackathonSettings(): Promise<HackathonSettings> {
     if (data && !error) {
       return {
         registration_open: data.registration_open ?? true,
-        registration_deadline: data.registration_deadline || new Date(Date.now() + 30 * 86400000).toISOString(),
+        submission_open: data.submission_open ?? true,
+        results_published: data.results_published ?? false,
+        top_shortlist_per_track: data.top_shortlist_per_track || 2,
+        registration_deadline: data.registration_deadline || "2026-08-28T23:59:59+05:30",
         min_team_size: data.min_team_size || 1,
         max_team_size: data.max_team_size || 4,
       };
@@ -198,7 +211,10 @@ export async function getHackathonSettings(): Promise<HackathonSettings> {
 
   return {
     registration_open: true,
-    registration_deadline: new Date(Date.now() + 30 * 86400000).toISOString(),
+    submission_open: true,
+    results_published: false,
+    top_shortlist_per_track: 2,
+    registration_deadline: "2026-08-28T23:59:59+05:30",
     min_team_size: 1,
     max_team_size: 4,
   };
