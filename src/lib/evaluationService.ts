@@ -53,51 +53,85 @@ export async function getSubmissionsForJudge(
   statusFilter: string = "all"
 ): Promise<{ submissions: JudgeSubmissionView[]; error?: string }> {
   try {
-    // Query submissions joined with teams, themes, and evaluations
+    // 1. Flat query for all submissions
     const { data: rawSubmissions, error: subErr } = await supabase
       .from("submissions")
-      .select(`
-        id,
-        team_id,
-        file_name,
-        file_path,
-        file_size,
-        submitted_at,
-        teams (
-          id,
-          team_name,
-          team_code,
-          theme_id,
-          themes (
-            id,
-            name,
-            slug
-          )
-        )
-      `)
+      .select("*")
       .order("submitted_at", { ascending: false });
 
     if (subErr) {
       console.error("Judge submissions fetch error:", subErr);
-      return { submissions: [], error: subErr.message };
+      return { submissions: [], error: `Failed to fetch submissions: ${subErr.message}` };
     }
 
     if (!rawSubmissions || rawSubmissions.length === 0) {
       return { submissions: [] };
     }
 
-    // Fetch existing evaluations by this judge
-    const { data: evaluations } = await supabase
-      .from("evaluations")
+    // 2. Flat query for teams
+    const { data: teamsData, error: teamErr } = await supabase
+      .from("teams")
+      .select("id, team_name, team_code, theme_id");
+
+    if (teamErr) {
+      console.warn("Teams fetch notice:", teamErr.message);
+    }
+
+    const teamMap = new Map<string, any>();
+    (teamsData || []).forEach((t: any) => teamMap.set(t.id, t));
+
+    // 3. Flat query for themes
+    const { data: themesData } = await supabase
+      .from("themes")
+      .select("id, name, slug");
+
+    const themeMap = new Map<string, any>();
+    (themesData || []).forEach((th: any) => {
+      themeMap.set(th.id, th);
+      if (th.slug) themeMap.set(th.slug, th);
+    });
+
+    // 4. Fetch evaluations from round1_evaluations (with fallback to evaluations)
+    let evaluations: any[] = [];
+    const { data: r1Evals, error: r1Err } = await supabase
+      .from("round1_evaluations")
       .select("*")
       .eq("judge_id", judgeId);
 
+    if (!r1Err && r1Evals) {
+      evaluations = r1Evals;
+    } else {
+      const { data: legacyEvals } = await supabase
+        .from("evaluations")
+        .select("*")
+        .eq("judge_id", judgeId);
+      evaluations = legacyEvals || [];
+    }
+
     const evalMap = new Map<string, Evaluation>();
-    (evaluations || []).forEach((e: any) => {
-      evalMap.set(e.submission_id, e as Evaluation);
+    evaluations.forEach((e: any) => {
+      const mappedEval: Evaluation = {
+        id: e.id,
+        submission_id: e.submission_id,
+        team_id: e.team_id,
+        judge_id: e.judge_id,
+        creativity_score: Number(e.creativity_innovation ?? e.creativity_score ?? 0),
+        business_problem_score: Number(e.business_relevance ?? e.business_problem_score ?? 0),
+        technology_score: Number(e.ai_technology ?? e.technology_score ?? 0),
+        feasibility_score: Number(e.feasibility_execution ?? e.feasibility_score ?? 0),
+        impact_score: Number(e.business_impact_scalability ?? e.impact_score ?? 0),
+        track_relevance_score: Number(e.track_relevance ?? e.track_relevance_score ?? 0),
+        presentation_score: Number(e.presentation_clarity ?? e.presentation_score ?? 0),
+        total_score: Number(e.total_score ?? 0),
+        comments: e.feedback || e.comments || "",
+        status: e.status || "submitted",
+        created_at: e.created_at,
+        updated_at: e.updated_at,
+      };
+      evalMap.set(e.submission_id, mappedEval);
     });
 
-    // Fetch team members for context
+    // 5. Fetch team members for context
     const { data: allMembers } = await supabase
       .from("team_members")
       .select("team_id, profiles(full_name, email, role)");
@@ -118,16 +152,25 @@ export async function getSubmissionsForJudge(
     const result: JudgeSubmissionView[] = [];
 
     for (const sub of rawSubmissions) {
-      const team = sub.teams as any;
-      if (!team) continue;
+      const team = teamMap.get(sub.team_id) || {
+        id: sub.team_id,
+        team_name: "Squad #" + sub.team_id.slice(0, 8),
+        team_code: "N/A",
+        theme_id: "general",
+      };
 
-      const themeName = team.themes?.name || "General Track";
-      const themeSlug = team.themes?.slug || "";
+      const themeObj = themeMap.get(team.theme_id);
+      const themeName = themeObj?.name || "General Track";
+      const themeSlug = themeObj?.slug || "";
       const themeId = team.theme_id || "";
 
       // Apply Track Filter
       if (trackFilter !== "all") {
-        if (themeId !== trackFilter && themeSlug !== trackFilter && !themeName.toLowerCase().includes(trackFilter.toLowerCase())) {
+        if (
+          themeId !== trackFilter &&
+          themeSlug !== trackFilter &&
+          !themeName.toLowerCase().includes(trackFilter.toLowerCase())
+        ) {
           continue;
         }
       }
@@ -148,10 +191,10 @@ export async function getSubmissionsForJudge(
         team_code: team.team_code,
         theme_id: themeId,
         theme_name: themeName,
-        file_name: sub.file_name,
+        file_name: sub.file_name || sub.original_filename || "Round1_Submission.pptx",
         file_path: sub.file_path,
         file_size: Number(sub.file_size || 0),
-        submitted_at: sub.submitted_at,
+        submitted_at: sub.submitted_at || new Date().toISOString(),
         members_count: teamMembers.length,
         members: teamMembers,
         evaluation: existingEval,
@@ -165,7 +208,7 @@ export async function getSubmissionsForJudge(
   }
 }
 
-// 2. Save Draft or Submit Final Evaluation
+// 2. Save Draft or Submit Final Evaluation to round1_evaluations
 export async function saveJudgeEvaluation(
   evaluation: Evaluation
 ): Promise<{ success: boolean; evaluation?: Evaluation; error?: string }> {
@@ -187,6 +230,57 @@ export async function saveJudgeEvaluation(
       submission_id: evaluation.submission_id,
       team_id: evaluation.team_id,
       judge_id: evaluation.judge_id,
+      creativity_innovation: creativity,
+      creativity_score: creativity,
+      business_relevance: businessProblem,
+      business_problem_score: businessProblem,
+      ai_technology: technology,
+      technology_score: technology,
+      feasibility_execution: feasibility,
+      feasibility_score: feasibility,
+      business_impact_scalability: impact,
+      impact_score: impact,
+      track_relevance: trackRelevance,
+      track_relevance_score: trackRelevance,
+      presentation_clarity: presentation,
+      presentation_score: presentation,
+      total_score: calculatedTotal,
+      feedback: evaluation.comments || "",
+      comments: evaluation.comments || "",
+      status: evaluation.status || "submitted",
+      updated_at: new Date().toISOString(),
+    };
+
+    // Primary upsert to round1_evaluations
+    let { data, error } = await supabase
+      .from("round1_evaluations")
+      .upsert(payload, { onConflict: "submission_id,judge_id" })
+      .select()
+      .maybeSingle();
+
+    if (error) {
+      console.warn("round1_evaluations upsert warning (trying legacy evaluations table):", error.message);
+      // Fallback to legacy evaluations table
+      const fallback = await supabase
+        .from("evaluations")
+        .upsert(payload, { onConflict: "submission_id,judge_id" })
+        .select()
+        .maybeSingle();
+
+      data = fallback.data;
+      error = fallback.error;
+    }
+
+    if (error) {
+      console.error("Evaluation save error:", error);
+      return { success: false, error: error.message };
+    }
+
+    const savedEval: Evaluation = {
+      id: data?.id,
+      submission_id: evaluation.submission_id,
+      team_id: evaluation.team_id,
+      judge_id: evaluation.judge_id,
       creativity_score: creativity,
       business_problem_score: businessProblem,
       technology_score: technology,
@@ -197,21 +291,9 @@ export async function saveJudgeEvaluation(
       total_score: calculatedTotal,
       comments: evaluation.comments || "",
       status: evaluation.status || "submitted",
-      updated_at: new Date().toISOString(),
     };
 
-    const { data, error } = await supabase
-      .from("evaluations")
-      .upsert(payload, { onConflict: "submission_id,judge_id" })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("Evaluation save error:", error);
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, evaluation: data as Evaluation };
+    return { success: true, evaluation: savedEval };
   } catch (err: any) {
     console.error("saveJudgeEvaluation error:", err);
     return { success: false, error: err.message || "Failed to save evaluation." };

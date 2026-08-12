@@ -57,38 +57,54 @@ export async function getAdminDashboardData(): Promise<{ stats: AdminStats | nul
     const topShortlist = settings?.top_shortlist_per_track || 2;
 
     // 2. Fetch all Themes
-    const { data: themes } = await supabase
+    const { data: themes, error: themesErr } = await supabase
       .from("themes")
       .select("id, name, slug")
       .eq("is_active", true);
 
+    if (themesErr) console.warn("Themes query notice:", themesErr.message);
     const themeList = themes || [];
 
     // 3. Fetch all Teams
-    const { data: teams } = await supabase
+    const { data: teams, error: teamsErr } = await supabase
       .from("teams")
       .select("id, team_name, team_code, theme_id");
 
+    if (teamsErr) console.warn("Teams query notice:", teamsErr.message);
     const teamList = teams || [];
 
     // 4. Fetch all Submissions
-    const { data: submissions } = await supabase
+    const { data: submissions, error: subErr } = await supabase
       .from("submissions")
-      .select("id, team_id, file_name, file_path, submitted_at");
+      .select("*");
+
+    if (subErr) {
+      console.error("Admin submissions fetch error:", subErr.message);
+    }
 
     const submissionMap = new Map<string, any>();
     (submissions || []).forEach((s: any) => {
       submissionMap.set(s.team_id, s);
     });
 
-    // 5. Fetch all Evaluations
-    const { data: evaluations } = await supabase
-      .from("evaluations")
+    // 5. Fetch all Evaluations from round1_evaluations (with fallback to evaluations)
+    let evaluations: any[] = [];
+    const { data: r1Evals, error: r1Err } = await supabase
+      .from("round1_evaluations")
       .select("*");
+
+    if (!r1Err && r1Evals) {
+      evaluations = r1Evals;
+    } else {
+      const { data: legacyEvals } = await supabase
+        .from("evaluations")
+        .select("*");
+      evaluations = legacyEvals || [];
+    }
 
     // Group evaluations by team_id
     const teamEvalsMap = new Map<string, any[]>();
-    (evaluations || []).forEach((e: any) => {
+    evaluations.forEach((e: any) => {
       const list = teamEvalsMap.get(e.team_id) || [];
       list.push(e);
       teamEvalsMap.set(e.team_id, list);
@@ -145,7 +161,7 @@ export async function getAdminDashboardData(): Promise<{ stats: AdminStats | nul
         totalSubmissionsCount += 1;
 
         const evals = teamEvalsMap.get(team.id) || [];
-        const isEvaluated = evals.length > 0;
+        const isEvaluated = evals.length > 0 && evals.some((e: any) => e.status === "submitted" || e.status === "evaluated");
 
         if (isEvaluated) {
           trackProg.evaluated_count += 1;
@@ -154,7 +170,7 @@ export async function getAdminDashboardData(): Promise<{ stats: AdminStats | nul
           trackProg.pending_count += 1;
         }
 
-        // Calculate average scores if multiple evaluations exist
+        // Calculate average scores if evaluations exist
         let totalScore = 0;
         let creativityScore = 0;
         let impactScore = 0;
@@ -162,9 +178,18 @@ export async function getAdminDashboardData(): Promise<{ stats: AdminStats | nul
 
         if (evals.length > 0) {
           const sumTotal = evals.reduce((acc, curr) => acc + Number(curr.total_score || 0), 0);
-          const sumCreativity = evals.reduce((acc, curr) => acc + Number(curr.creativity_score || 0), 0);
-          const sumImpact = evals.reduce((acc, curr) => acc + Number(curr.impact_score || 0), 0);
-          const sumTrackRel = evals.reduce((acc, curr) => acc + Number(curr.track_relevance_score || 0), 0);
+          const sumCreativity = evals.reduce(
+            (acc, curr) => acc + Number(curr.creativity_innovation ?? curr.creativity_score ?? 0),
+            0
+          );
+          const sumImpact = evals.reduce(
+            (acc, curr) => acc + Number(curr.business_impact_scalability ?? curr.impact_score ?? 0),
+            0
+          );
+          const sumTrackRel = evals.reduce(
+            (acc, curr) => acc + Number(curr.track_relevance ?? curr.track_relevance_score ?? 0),
+            0
+          );
 
           totalScore = Number((sumTotal / evals.length).toFixed(2));
           creativityScore = Number((sumCreativity / evals.length).toFixed(2));
@@ -183,7 +208,7 @@ export async function getAdminDashboardData(): Promise<{ stats: AdminStats | nul
           theme_id: themeId,
           theme_name: trackProg.theme_name,
           submission_id: sub.id,
-          file_name: sub.file_name,
+          file_name: sub.file_name || sub.original_filename || "Proposal.pptx",
           file_path: sub.file_path,
           submitted_at: sub.submitted_at,
           total_score: totalScore,
@@ -193,158 +218,157 @@ export async function getAdminDashboardData(): Promise<{ stats: AdminStats | nul
           evaluation_count: evals.length,
           is_shortlisted: isShortlisted,
         });
-      }
 
-      trackProgressMap.set(themeId, trackProg);
+        if (!trackProgressMap.has(themeId)) {
+          trackProgressMap.set(themeId, trackProg);
+        }
+      }
     });
 
-    // 8. Sort Track Leaderboards using EXACT Official Tie-Breakers:
-    // Primary: Total Score (descending)
-    // 1st Tie-Breaker: Creativity & Innovation Score (descending)
-    // 2nd Tie-Breaker: Business Impact & Scalability Score (descending)
-    // 3rd Tie-Breaker: Track Relevance Score (descending)
-    const tracks: TrackProgress[] = [];
+    // 8. Sort Track-wise Leaderboards separately with 3-tier tie-breakers
+    const tracksList: TrackProgress[] = [];
 
-    trackProgressMap.forEach((trackProg) => {
-      if (trackProg.total_submissions > 0) {
-        trackProg.completion_pct = Math.round(
-          (trackProg.evaluated_count / trackProg.total_submissions) * 100
-        );
-      }
+    trackProgressMap.forEach((prog) => {
+      prog.completion_pct =
+        prog.total_submissions > 0
+          ? Math.round((prog.evaluated_count / prog.total_submissions) * 100)
+          : 0;
 
-      trackProg.rankings.sort((a, b) => {
+      prog.rankings.sort((a, b) => {
+        // 1st Priority: Total Score
         if (b.total_score !== a.total_score) {
           return b.total_score - a.total_score;
         }
-        // 1st Tie-breaker: Creativity score
+        // 2nd Priority (1st Tie-breaker): Creativity & Innovation
         if (b.creativity_score !== a.creativity_score) {
-          a.tie_breaker_note = "Ranked via 1st Tie-Breaker: Creativity & Innovation";
-          b.tie_breaker_note = "Ranked via 1st Tie-Breaker: Creativity & Innovation";
           return b.creativity_score - a.creativity_score;
         }
-        // 2nd Tie-breaker: Business Impact score
+        // 3rd Priority (2nd Tie-breaker): Business Impact & Scalability
         if (b.impact_score !== a.impact_score) {
-          a.tie_breaker_note = "Ranked via 2nd Tie-Breaker: Business Impact & Scalability";
-          b.tie_breaker_note = "Ranked via 2nd Tie-Breaker: Business Impact & Scalability";
           return b.impact_score - a.impact_score;
         }
-        // 3rd Tie-breaker: Track Relevance score
-        if (b.track_relevance_score !== a.track_relevance_score) {
-          a.tie_breaker_note = "Ranked via 3rd Tie-Breaker: Track Relevance";
-          b.tie_breaker_note = "Ranked via 3rd Tie-Breaker: Track Relevance";
-          return b.track_relevance_score - a.track_relevance_score;
-        }
-        return 0;
+        // 4th Priority (3rd Tie-breaker): Track Relevance
+        return b.track_relevance_score - a.track_relevance_score;
       });
 
-      // Assign 1-indexed rank within track
-      trackProg.rankings.forEach((item, idx) => {
-        item.rank = idx + 1;
+      // Assign track rank and tie-breaker notes
+      prog.rankings.forEach((entry, idx) => {
+        entry.rank = idx + 1;
       });
 
-      tracks.push(trackProg);
+      tracksList.push(prog);
     });
 
-    const pendingCount = totalSubmissionsCount - totalEvaluatedCount;
-    const overallCompletionPct = totalSubmissionsCount > 0
-      ? Math.round((totalEvaluatedCount / totalSubmissionsCount) * 100)
-      : 0;
+    const pendingSubmissionsCount = totalSubmissionsCount - totalEvaluatedCount;
+    const overallCompletionPct =
+      totalSubmissionsCount > 0
+        ? Math.round((totalEvaluatedCount / totalSubmissionsCount) * 100)
+        : 0;
 
-    return {
-      stats: {
-        total_teams: teamList.length,
-        total_submissions: totalSubmissionsCount,
-        evaluated_submissions: totalEvaluatedCount,
-        pending_submissions: pendingCount,
-        shortlisted_teams: totalShortlistedCount,
-        evaluation_completion_pct: overallCompletionPct,
-        results_published: resultsPublished,
-        top_shortlist_per_track: topShortlist,
-        tracks,
-      },
+    const stats: AdminStats = {
+      total_teams: teamList.length,
+      total_submissions: totalSubmissionsCount,
+      evaluated_submissions: totalEvaluatedCount,
+      pending_submissions: pendingSubmissionsCount > 0 ? pendingSubmissionsCount : 0,
+      shortlisted_teams: totalShortlistedCount,
+      evaluation_completion_pct: overallCompletionPct,
+      results_published: resultsPublished,
+      top_shortlist_per_track: topShortlist,
+      tracks: tracksList,
     };
+
+    return { stats };
   } catch (err: any) {
     console.error("getAdminDashboardData unexpected error:", err);
-    return { stats: null, error: err.message || "Failed to load admin statistics." };
+    return { stats: null, error: err.message || "Failed to load admin dashboard statistics." };
   }
 }
 
-// 2. Generate / Update Track-wise Shortlists (Top N per Track)
+// 2. Generate Top N Shortlists per Track with 3-Tier Tie-Breakers
 export async function generateTrackShortlists(
   topNPerTrack: number = 2
-): Promise<{ success: boolean; shortlistedCount: number; error?: string }> {
+): Promise<{ success: boolean; shortlistedCount?: number; error?: string }> {
   try {
-    const { stats } = await getAdminDashboardData();
-    if (!stats) return { success: false, shortlistedCount: 0, error: "Failed to read track rankings." };
+    const dashRes = await getAdminDashboardData();
+    if (!dashRes.stats) {
+      return { success: false, error: dashRes.error || "Failed to calculate current rankings." };
+    }
 
-    const shortlistRows: any[] = [];
-    let count = 0;
+    const shortlistsToInsert: any[] = [];
 
-    // Reset current shortlists
-    await supabase.from("shortlists").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
-    stats.tracks.forEach((track) => {
+    dashRes.stats.tracks.forEach((track) => {
       const topTeams = track.rankings.slice(0, topNPerTrack);
       topTeams.forEach((team) => {
-        count += 1;
-        shortlistRows.push({
+        shortlistsToInsert.push({
           team_id: team.team_id,
-          theme_id: team.theme_id,
+          theme_id: track.theme_id,
           rank_in_track: team.rank,
           total_score: team.total_score,
           creativity_score: team.creativity_score,
           impact_score: team.impact_score,
           track_relevance_score: team.track_relevance_score,
           is_shortlisted: true,
-          published_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         });
       });
     });
 
-    if (shortlistRows.length > 0) {
-      const { error: insertErr } = await supabase
-        .from("shortlists")
-        .upsert(shortlistRows, { onConflict: "team_id" });
+    // Clear existing and bulk insert new shortlists
+    await supabase.from("shortlists").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
-      if (insertErr) {
-        console.error("Shortlist upsert error:", insertErr);
-        return { success: false, shortlistedCount: 0, error: insertErr.message };
+    if (shortlistsToInsert.length > 0) {
+      const { error: insErr } = await supabase.from("shortlists").upsert(shortlistsToInsert, { onConflict: "team_id" });
+      if (insErr) {
+        console.error("Shortlist insert error:", insErr);
+        return { success: false, error: insErr.message };
       }
     }
 
-    // Update settings table
+    // Save top_shortlist_per_track in hackathon_settings
     await supabase
       .from("hackathon_settings")
       .update({ top_shortlist_per_track: topNPerTrack })
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .neq("registration_open", false);
 
-    return { success: true, shortlistedCount: count };
+    return { success: true, shortlistedCount: shortlistsToInsert.length };
   } catch (err: any) {
-    console.error("generateTrackShortlists error:", err);
-    return { success: false, shortlistedCount: 0, error: err.message };
+    return { success: false, error: err.message || "Failed to generate shortlists." };
   }
 }
 
 // 3. Toggle Results Publication Status
 export async function toggleResultsPublication(
   publish: boolean
-): Promise<{ success: boolean; error?: string }> {
+): Promise<{ success: boolean; results_published?: boolean; error?: string }> {
   try {
-    const { error } = await supabase
+    const { data: settings } = await supabase
       .from("hackathon_settings")
-      .update({ results_published: publish })
-      .neq("id", "00000000-0000-0000-0000-000000000000");
+      .select("id")
+      .limit(1)
+      .maybeSingle();
 
-    if (error) {
-      return { success: false, error: error.message };
+    if (settings?.id) {
+      const { error } = await supabase
+        .from("hackathon_settings")
+        .update({ results_published: publish })
+        .eq("id", settings.id);
+
+      if (error) return { success: false, error: error.message };
+    } else {
+      const { error } = await supabase
+        .from("hackathon_settings")
+        .insert({ results_published: publish });
+
+      if (error) return { success: false, error: error.message };
     }
-    return { success: true };
+
+    return { success: true, results_published: publish };
   } catch (err: any) {
-    return { success: false, error: err.message };
+    return { success: false, error: err.message || "Failed to update publication status." };
   }
 }
 
-// 4. Fetch Student Team Round 1 Result Status (Safe for Student Dashboard)
+// 4. Get Student Team Result Status
 export async function getStudentTeamResult(teamId: string): Promise<{
   resultsPublished: boolean;
   isShortlisted: boolean;
@@ -364,15 +388,19 @@ export async function getStudentTeamResult(teamId: string): Promise<{
 
     const { data: shortlist } = await supabase
       .from("shortlists")
-      .select("is_shortlisted, rank_in_track")
+      .select("*")
       .eq("team_id", teamId)
       .maybeSingle();
 
-    return {
-      resultsPublished: true,
-      isShortlisted: shortlist?.is_shortlisted ?? false,
-      rankInTrack: shortlist?.rank_in_track,
-    };
+    if (shortlist && shortlist.is_shortlisted) {
+      return {
+        resultsPublished: true,
+        isShortlisted: true,
+        rankInTrack: shortlist.rank_in_track || 1,
+      };
+    }
+
+    return { resultsPublished: true, isShortlisted: false };
   } catch (err) {
     return { resultsPublished: false, isShortlisted: false };
   }
