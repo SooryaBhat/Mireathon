@@ -11,19 +11,17 @@ UPDATE public.hackathon_settings
 SET registration_deadline = '2026-08-28T23:59:59+05:30'
 WHERE registration_deadline IS NULL OR registration_deadline < '2026-08-28T00:00:00+05:30';
 
--- 2. EXTEND SUBMISSIONS TABLE
-CREATE TABLE IF NOT EXISTS public.submissions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  team_id UUID UNIQUE NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
-  file_path TEXT NOT NULL,
-  file_name TEXT NOT NULL,
-  file_size BIGINT DEFAULT 0,
-  file_type TEXT,
-  submitted_by UUID REFERENCES public.profiles(id),
-  status TEXT DEFAULT 'submitted',
-  submitted_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
+-- 2. EXTEND SUBMISSIONS TABLE SAFELY (Preserving all proposal content columns)
+ALTER TABLE public.submissions 
+  ADD COLUMN IF NOT EXISTS file_path TEXT,
+  ADD COLUMN IF NOT EXISTS file_name TEXT,
+  ADD COLUMN IF NOT EXISTS file_size BIGINT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS file_type TEXT,
+  ADD COLUMN IF NOT EXISTS submitted_by UUID REFERENCES public.profiles(id),
+  ADD COLUMN IF NOT EXISTS original_filename TEXT,
+  ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'submitted',
+  ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ DEFAULT NOW(),
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 ALTER TABLE public.submissions ENABLE ROW LEVEL SECURITY;
 

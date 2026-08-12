@@ -103,25 +103,71 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 6. Create / Update Row in submissions Table
-    const { data: subData, error: dbErr } = await supabaseAdmin
+    // 6. Check existing submission row for this team to preserve proposal-content fields
+    const { data: existingSub } = await supabaseAdmin
       .from("submissions")
-      .upsert(
-        {
-          team_id: teamId,
-          submitted_by: userId,
-          file_path: filePath,
-          file_name: fileName,
-          file_size: file.size,
-          file_type: file.type || ext,
-          status: "submitted",
-          submitted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "team_id" }
-      )
+      .select("*")
+      .eq("team_id", teamId)
+      .maybeSingle();
+
+    const submissionPayload: Record<string, any> = {
+      team_id: teamId,
+      file_path: filePath,
+      file_name: fileName,
+      original_filename: fileName,
+      file_size: file.size,
+      file_type: file.type || ext,
+      submitted_by: userId,
+      status: "submitted",
+      submitted_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Preserve existing proposal-content fields if available
+    if (existingSub) {
+      if (existingSub.title) submissionPayload.title = existingSub.title;
+      if (existingSub.problem_statement) submissionPayload.problem_statement = existingSub.problem_statement;
+      if (existingSub.solution) submissionPayload.solution = existingSub.solution;
+      if (existingSub.ai_usage) submissionPayload.ai_usage = existingSub.ai_usage;
+      if (existingSub.business_impact) submissionPayload.business_impact = existingSub.business_impact;
+    } else {
+      submissionPayload.title = `${team.team_name} Round 1 Proposal`;
+    }
+
+    let subData: any = null;
+    let dbErr: any = null;
+
+    // Try upserting with full payload
+    const { data: upsertData, error: upsertErr } = await supabaseAdmin
+      .from("submissions")
+      .upsert(submissionPayload, { onConflict: "team_id" })
       .select()
-      .single();
+      .maybeSingle();
+
+    if (upsertErr) {
+      console.warn("Full payload upsert warning (retrying core fields):", upsertErr.message);
+      // Fallback: stripped payload with core columns if optional columns are missing
+      const corePayload = {
+        team_id: teamId,
+        file_path: filePath,
+        file_name: fileName,
+        file_size: file.size,
+        status: "submitted",
+        submitted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const { data: coreData, error: coreErr } = await supabaseAdmin
+        .from("submissions")
+        .upsert(corePayload, { onConflict: "team_id" })
+        .select()
+        .maybeSingle();
+
+      subData = coreData;
+      dbErr = coreErr;
+    } else {
+      subData = upsertData;
+    }
 
     if (dbErr) {
       console.error("Database submission record error:", dbErr);
@@ -138,7 +184,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      submission: subData,
+      submission: subData || submissionPayload,
       signedUrl: urlData?.signedUrl || null,
     });
   } catch (err: any) {
