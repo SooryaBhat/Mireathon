@@ -44,45 +44,45 @@ export interface HackathonSettings {
   max_team_size: number;
 }
 
-// Default fallback themes metadata
+// Default 6 Official Theme Tracks (Slugs as Fallback IDs - No Artificial track-1 strings)
 export const THEME_TRACKS: ThemeTrack[] = [
   {
-    id: "track-1",
+    id: "retail-real-estate",
     name: "01 — RETAIL & REAL ESTATE",
     slug: "retail-real-estate",
     description: "Augmented Shopping & Spatial Commerce",
     image_url: "/New_images/Retail.png",
   },
   {
-    id: "track-2",
+    id: "finance-investments",
     name: "02 — FINANCE & INVESTMENTS",
     slug: "finance-investments",
     description: "Decentralized Wealth & Smart Fintech",
     image_url: "/New_images/finance.png",
   },
   {
-    id: "track-3",
+    id: "health-wellness",
     name: "03 — HEALTH & WELLNESS",
     slug: "health-wellness",
     description: "Biotech Signals & Preventive Care",
     image_url: "/New_images/health.png",
   },
   {
-    id: "track-4",
+    id: "travel-food",
     name: "04 — TRAVEL & FOOD",
     slug: "travel-food",
     description: "Autonomous Expeditions & Ghost Kitchens",
     image_url: "/New_images/travel.png",
   },
   {
-    id: "track-5",
+    id: "sports-fitness",
     name: "05 — SPORTS & FITNESS",
     slug: "sports-fitness",
     description: "Kinetic Performance & Fan Immersion",
     image_url: "/New_images/sports.png",
   },
   {
-    id: "track-6",
+    id: "music-ott",
     name: "06 — MUSIC & OTT",
     slug: "music-ott",
     description: "Sonic Generative Media & Streaming",
@@ -110,12 +110,12 @@ export async function fetchThemes(): Promise<ThemeTrack[]> {
   try {
     const { data, error } = await supabase
       .from("themes")
-      .select("*")
+      .select("id, name, slug, description, image_url")
       .eq("is_active", true);
 
     if (data && data.length > 0 && !error) {
       return data.map((t: any) => ({
-        id: t.id, // REAL Supabase Database UUID
+        id: t.id, // REAL Supabase Database UUID!
         name: t.name,
         slug: t.slug,
         description: t.description || "",
@@ -128,7 +128,54 @@ export async function fetchThemes(): Promise<ThemeTrack[]> {
   return THEME_TRACKS;
 }
 
-// 1. Fetch Hackathon Settings from Remote Supabase Database (Using maybeSingle to prevent 406 errors)
+// Helper: Safely resolve Theme UUID without causing invalid UUID syntax errors in Postgres
+export async function resolveThemeUuid(themeIdOrSlug: string): Promise<string | null> {
+  if (!themeIdOrSlug) return null;
+
+  // 1. If it's already a valid UUID, return it directly
+  if (isUUID(themeIdOrSlug)) {
+    return themeIdOrSlug;
+  }
+
+  // 2. Look up theme by slug ONLY (Never query id.eq with a non-UUID string!)
+  try {
+    const { data: themeBySlug } = await supabase
+      .from("themes")
+      .select("id")
+      .eq("slug", themeIdOrSlug)
+      .maybeSingle();
+
+    if (themeBySlug?.id && isUUID(themeBySlug.id)) {
+      return themeBySlug.id;
+    }
+  } catch (err) {
+    console.warn("Theme lookup by slug failed:", err);
+  }
+
+  // 3. Query all themes from database and match by slug or fallback to first theme UUID
+  try {
+    const { data: allThemes } = await supabase
+      .from("themes")
+      .select("id, slug")
+      .eq("is_active", true);
+
+    if (allThemes && allThemes.length > 0) {
+      const matched = allThemes.find((t: any) => t.slug === themeIdOrSlug);
+      if (matched?.id && isUUID(matched.id)) {
+        return matched.id;
+      }
+      if (allThemes[0]?.id && isUUID(allThemes[0].id)) {
+        return allThemes[0].id;
+      }
+    }
+  } catch (err) {
+    console.warn("All themes lookup failed:", err);
+  }
+
+  return null;
+}
+
+// 1. Fetch Hackathon Settings from Remote Supabase Database (Using maybeSingle)
 export async function getHackathonSettings(): Promise<HackathonSettings> {
   try {
     const { data, error } = await supabase
@@ -195,17 +242,17 @@ export async function signUpStudent(
       role: "student",
     };
 
-    // Update profile (which was automatically inserted by handle_new_user trigger)
+    // Update profile row (which was automatically created by handle_new_user trigger)
     const { error: updateErr } = await supabase
       .from("profiles")
       .update({ full_name: fullName, email, role: "student" })
       .eq("id", user.id);
 
     if (updateErr) {
-      // Fallback upsert if trigger didn't fire
+      // Safe fallback upsert if trigger didn't fire
       const { error: upsertErr } = await supabase.from("profiles").upsert(newProfile);
       if (upsertErr) {
-        console.warn("Profile table insert notice:", upsertErr.message);
+        console.warn("Profile table setup notice:", upsertErr.message);
       }
     }
 
@@ -289,52 +336,11 @@ export async function createTeam(
       return { team: null, error: "You are already part of a team." };
     }
 
-    // Resolve real Database UUID for theme
-    let realThemeUuid: string | null = null;
-
-    if (isUUID(themeIdOrSlug)) {
-      realThemeUuid = themeIdOrSlug;
-    } else {
-      // Look up theme UUID by slug or index mapping
-      const { data: foundTheme } = await supabase
-        .from("themes")
-        .select("id")
-        .or(`slug.eq.${themeIdOrSlug},id.eq.${themeIdOrSlug}`)
-        .maybeSingle();
-
-      if (foundTheme?.id) {
-        realThemeUuid = foundTheme.id;
-      } else {
-        // Find matching theme by index or slug fallback
-        const themes = await fetchThemes();
-        const matched = themes.find(
-          (t) => t.id === themeIdOrSlug || t.slug === themeIdOrSlug || isUUID(t.id)
-        );
-
-        if (matched && isUUID(matched.id)) {
-          realThemeUuid = matched.id;
-        } else if (themes.length > 0 && isUUID(themes[0].id)) {
-          realThemeUuid = themes[0].id;
-        }
-      }
-    }
+    // Resolve real Database UUID for theme cleanly
+    const realThemeUuid = await resolveThemeUuid(themeIdOrSlug);
 
     if (!realThemeUuid || !isUUID(realThemeUuid)) {
-      // Fetch first active theme UUID from database
-      const { data: firstDbTheme } = await supabase
-        .from("themes")
-        .select("id")
-        .eq("is_active", true)
-        .limit(1)
-        .maybeSingle();
-
-      if (firstDbTheme?.id && isUUID(firstDbTheme.id)) {
-        realThemeUuid = firstDbTheme.id;
-      }
-    }
-
-    if (!realThemeUuid || !isUUID(realThemeUuid)) {
-      return { team: null, error: "Unable to create your squad right now. Selected theme is invalid." };
+      return { team: null, error: "Unable to create your squad right now. Selected track is invalid." };
     }
 
     const teamCode = generateTeamCode();
@@ -346,7 +352,7 @@ export async function createTeam(
         team_code: teamCode,
         team_name: teamName.trim(),
         leader_id: leaderId,
-        theme_id: realThemeUuid, // Real Supabase Database UUID!
+        theme_id: realThemeUuid, // Real 100% Guaranteed Supabase Database UUID!
         status: "registered",
       })
       .select()
