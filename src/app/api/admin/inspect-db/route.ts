@@ -39,14 +39,7 @@ export async function GET(req: NextRequest) {
     .limit(10);
   report.round1_evaluations = { count: r1Evals?.length || 0, data: r1Evals, error: r1Err?.message || null };
 
-  // 6. Test evaluations table
-  const { data: legacyEvals, error: legacyErr } = await supabaseAdmin
-    .from("evaluations")
-    .select("*")
-    .limit(10);
-  report.evaluations = { count: legacyEvals?.length || 0, data: legacyEvals, error: legacyErr?.message || null };
-
-  // 7. Test hackathon_settings table
+  // 6. Test hackathon_settings table
   const { data: settings, error: setErr } = await supabaseAdmin
     .from("hackathon_settings")
     .select("*")

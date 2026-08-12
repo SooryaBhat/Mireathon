@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       if (th.slug) themeMap.set(th.slug, th);
     });
 
-    // 4. Fetch Evaluations (round1_evaluations with fallback to evaluations)
+    // 4. Fetch Evaluations exclusively from round1_evaluations
     let evaluations: any[] = [];
     if (judgeId) {
       const { data: r1Evals, error: r1Err } = await supabaseAdmin
@@ -50,15 +50,10 @@ export async function GET(req: NextRequest) {
         .select("*")
         .eq("judge_id", judgeId);
 
-      if (!r1Err && r1Evals) {
-        evaluations = r1Evals;
-      } else {
-        const { data: legacyEvals } = await supabaseAdmin
-          .from("evaluations")
-          .select("*")
-          .eq("judge_id", judgeId);
-        evaluations = legacyEvals || [];
+      if (r1Err) {
+        console.error("round1_evaluations fetch error:", r1Err);
       }
+      evaluations = r1Evals || [];
     }
 
     const evalMap = new Map<string, any>();
@@ -114,15 +109,15 @@ export async function GET(req: NextRequest) {
           submission_id: rawEval.submission_id,
           team_id: rawEval.team_id,
           judge_id: rawEval.judge_id,
-          creativity_score: Number(rawEval.creativity_innovation ?? rawEval.creativity_score ?? 0),
-          business_problem_score: Number(rawEval.business_relevance ?? rawEval.business_problem_score ?? 0),
-          technology_score: Number(rawEval.ai_technology ?? rawEval.technology_score ?? 0),
-          feasibility_score: Number(rawEval.feasibility_execution ?? rawEval.feasibility_score ?? 0),
-          impact_score: Number(rawEval.business_impact_scalability ?? rawEval.impact_score ?? 0),
-          track_relevance_score: Number(rawEval.track_relevance ?? rawEval.track_relevance_score ?? 0),
-          presentation_score: Number(rawEval.presentation_clarity ?? rawEval.presentation_score ?? 0),
-          total_score: Number(rawEval.total_score ?? 0),
-          comments: rawEval.feedback || rawEval.comments || "",
+          creativity_score: Number(rawEval.creativity_innovation || 0),
+          business_problem_score: Number(rawEval.business_relevance || 0),
+          technology_score: Number(rawEval.ai_technology || 0),
+          feasibility_score: Number(rawEval.feasibility_execution || 0),
+          impact_score: Number(rawEval.business_impact_scalability || 0),
+          track_relevance_score: Number(rawEval.track_relevance || 0),
+          presentation_score: Number(rawEval.presentation_clarity || 0),
+          total_score: Number(rawEval.total_score || 0),
+          comments: rawEval.feedback || "",
           status: rawEval.status || "submitted",
         };
       }
@@ -200,6 +195,7 @@ export async function POST(req: NextRequest) {
       (creativity + businessProblem + technology + feasibility + impact + trackRelevance + presentation).toFixed(2)
     );
 
+    // Exact schema mapping for public.round1_evaluations ONLY
     const payload = {
       submission_id,
       team_id,
@@ -217,48 +213,17 @@ export async function POST(req: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    // Primary upsert to round1_evaluations
-    let { data: savedData, error: saveErr } = await supabaseAdmin
+    // Upsert directly to round1_evaluations (NO legacy fallback)
+    const { data: savedData, error: saveErr } = await supabaseAdmin
       .from("round1_evaluations")
       .upsert(payload, { onConflict: "submission_id,judge_id" })
       .select()
-      .maybeSingle();
+      .single();
 
     if (saveErr) {
-      console.warn("round1_evaluations upsert notice:", saveErr.message);
-      // Fallback: try legacy evaluations table
-      const legacyPayload = {
-        submission_id,
-        team_id,
-        judge_id,
-        creativity_score: creativity,
-        business_problem_score: businessProblem,
-        technology_score: technology,
-        feasibility_score: feasibility,
-        impact_score: impact,
-        track_relevance_score: trackRelevance,
-        presentation_score: presentation,
-        total_score: totalScore,
-        comments: comments || "",
-        status: status || "submitted",
-        updated_at: new Date().toISOString(),
-      };
-
-      const fallback = await supabaseAdmin
-        .from("evaluations")
-        .upsert(legacyPayload, { onConflict: "submission_id,judge_id" })
-        .select()
-        .maybeSingle();
-
-      savedData = fallback.data;
-      saveErr = fallback.error;
-    }
-
-    if (saveErr) {
+      console.error("round1_evaluations save error:", saveErr);
       return NextResponse.json(
-        {
-          error: `Failed to save evaluation to database. Please make sure the 'round1_evaluations' table has been created in your Supabase SQL Editor. Error: ${saveErr.message}`,
-        },
+        { error: `Failed to save evaluation to round1_evaluations: ${saveErr.message}` },
         { status: 500 }
       );
     }

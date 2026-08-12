@@ -36,20 +36,15 @@ export async function GET(req: NextRequest) {
     const submissionMap = new Map<string, any>();
     (submissions || []).forEach((s: any) => submissionMap.set(s.team_id, s));
 
-    // 5. Fetch Evaluations (round1_evaluations with fallback to evaluations)
-    let evaluations: any[] = [];
+    // 5. Fetch Evaluations exclusively from round1_evaluations
     const { data: r1Evals, error: r1Err } = await supabaseAdmin
       .from("round1_evaluations")
       .select("*");
 
-    if (!r1Err && r1Evals) {
-      evaluations = r1Evals;
-    } else {
-      const { data: legacyEvals } = await supabaseAdmin
-        .from("evaluations")
-        .select("*");
-      evaluations = legacyEvals || [];
+    if (r1Err) {
+      console.warn("round1_evaluations query notice:", r1Err.message);
     }
+    const evaluations = r1Evals || [];
 
     const teamEvalsMap = new Map<string, any[]>();
     evaluations.forEach((e: any) => {
@@ -107,7 +102,7 @@ export async function GET(req: NextRequest) {
         totalSubmissionsCount += 1;
 
         const evals = teamEvalsMap.get(team.id) || [];
-        const isEvaluated = evals.length > 0 && evals.some((e: any) => e.status === "submitted" || e.status === "evaluated");
+        const isEvaluated = evals.length > 0 && evals.some((e: any) => e.status === "submitted");
 
         if (isEvaluated) {
           trackProg.evaluated_count += 1;
@@ -123,18 +118,9 @@ export async function GET(req: NextRequest) {
 
         if (evals.length > 0) {
           const sumTotal = evals.reduce((acc, curr) => acc + Number(curr.total_score || 0), 0);
-          const sumCreativity = evals.reduce(
-            (acc, curr) => acc + Number(curr.creativity_innovation ?? curr.creativity_score ?? 0),
-            0
-          );
-          const sumImpact = evals.reduce(
-            (acc, curr) => acc + Number(curr.business_impact_scalability ?? curr.impact_score ?? 0),
-            0
-          );
-          const sumTrackRel = evals.reduce(
-            (acc, curr) => acc + Number(curr.track_relevance ?? curr.track_relevance_score ?? 0),
-            0
-          );
+          const sumCreativity = evals.reduce((acc, curr) => acc + Number(curr.creativity_innovation || 0), 0);
+          const sumImpact = evals.reduce((acc, curr) => acc + Number(curr.business_impact_scalability || 0), 0);
+          const sumTrackRel = evals.reduce((acc, curr) => acc + Number(curr.track_relevance || 0), 0);
 
           totalScore = Number((sumTotal / evals.length).toFixed(2));
           creativityScore = Number((sumCreativity / evals.length).toFixed(2));
