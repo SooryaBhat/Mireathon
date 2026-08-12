@@ -14,11 +14,10 @@ export interface Submission {
   updated_at: string;
 }
 
-// Allowed File Types & Max Size
-const ALLOWED_EXTENSIONS = [".pptx", ".ppt", ".pdf"];
+const ALLOWED_EXTENSIONS = [".ppt", ".pptx", ".pdf"];
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
 
-// 1. Fetch Team Submission Details
+// 1. Fetch Team Submission Details & Signed Download URL
 export async function getTeamSubmission(teamId: string): Promise<{
   submission: Submission | null;
   signedUrl: string | null;
@@ -35,51 +34,51 @@ export async function getTeamSubmission(teamId: string): Promise<{
       return { submission: null, signedUrl: null };
     }
 
-    // Generate signed download URL (valid 1 hour)
-    const { data: urlData } = await supabase.storage
-      .from("round1-submissions")
-      .createSignedUrl(data.file_path, 3600);
+    // Get signed URL via API endpoint
+    let signedUrl: string | null = null;
+    try {
+      const resp = await fetch("/api/submissions/signed-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filePath: data.file_path }),
+      });
+      if (resp.ok) {
+        const urlData = await resp.json();
+        signedUrl = urlData.signedUrl || null;
+      }
+    } catch (e) {
+      // Client storage fallback
+      const { data: urlData } = await supabase.storage
+        .from("round1-submissions")
+        .createSignedUrl(data.file_path, 3600);
+      signedUrl = urlData?.signedUrl || null;
+    }
 
     return {
       submission: data as Submission,
-      signedUrl: urlData?.signedUrl || null,
+      signedUrl,
     };
   } catch (err: any) {
     return { submission: null, signedUrl: null, error: err.message };
   }
 }
 
-// 2. Upload or Replace Round 1 Submission (Leader Only)
+// 2. Upload or Replace Round 1 Submission via Secure API Endpoint
 export async function uploadSubmission(
   teamId: string,
   leaderId: string,
   file: File
 ): Promise<{ submission: Submission | null; error?: string }> {
   try {
-    // 1. Check deadline single source of truth (28 August 2026 Asia/Kolkata)
+    // Client-side quick validations
     const settings = await getHackathonSettings();
     if (isDeadlinePassed(settings.registration_deadline) || !settings.submission_open) {
       return {
         submission: null,
-        error: "Submissions for Round 1 closed on 28 August 2026. Replacing or uploading files is locked.",
+        error: "Submissions for Round 1 closed on 28 August 2026. File upload and replacement are locked.",
       };
     }
 
-    // 2. Verify caller is Team Leader
-    const { data: team, error: teamErr } = await supabase
-      .from("teams")
-      .select("leader_id")
-      .eq("id", teamId)
-      .maybeSingle();
-
-    if (teamErr || !team || team.leader_id !== leaderId) {
-      return {
-        submission: null,
-        error: "Permission denied: Only the Team Leader can upload or replace submissions.",
-      };
-    }
-
-    // 3. Validate File Extension
     const fileName = file.name;
     const ext = "." + fileName.split(".").pop()?.toLowerCase();
     if (!ALLOWED_EXTENSIONS.includes(ext)) {
@@ -89,7 +88,6 @@ export async function uploadSubmission(
       };
     }
 
-    // 4. Validate File Size (Max 10MB)
     if (file.size > MAX_FILE_SIZE_BYTES) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       return {
@@ -98,70 +96,49 @@ export async function uploadSubmission(
       };
     }
 
-    // 5. Upload file to Supabase Storage bucket 'round1-submissions'
-    const sanitizeName = fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filePath = `${teamId}/${Date.now()}_${sanitizeName}`;
+    // Send to Server Upload API
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("teamId", teamId);
+    formData.append("userId", leaderId);
 
-    const { error: storageErr } = await supabase.storage
-      .from("round1-submissions")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: true,
-      });
+    const resp = await fetch("/api/submissions/upload", {
+      method: "POST",
+      body: formData,
+    });
 
-    if (storageErr) {
-      console.error("Storage upload error:", storageErr);
+    const resData = await resp.json();
+
+    if (!resp.ok || !resData.success) {
       return {
         submission: null,
-        error: `Storage upload failed: ${storageErr.message}`,
+        error: resData.error || "Failed to upload submission to server.",
       };
     }
 
-    // 6. Upsert submission record in public.submissions table
-    const { data: subData, error: subErr } = await supabase
-      .from("submissions")
-      .upsert(
-        {
-          team_id: teamId,
-          file_path: filePath,
-          file_name: fileName,
-          file_size: file.size,
-          file_type: file.type || ext,
-          submitted_by: leaderId,
-          status: "submitted",
-          submitted_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "team_id" }
-      )
-      .select()
-      .single();
-
-    if (subErr) {
-      console.error("Database submission record error:", subErr);
-      return {
-        submission: null,
-        error: `Failed to save submission record: ${subErr.message}`,
-      };
-    }
-
-    return { submission: subData as Submission };
+    return { submission: resData.submission as Submission };
   } catch (err: any) {
     console.error("uploadSubmission unexpected error:", err);
     return { submission: null, error: err.message || "An unexpected upload error occurred." };
   }
 }
 
-// 3. Generate Signed Download URL for Any File Path (Authorized Calls)
+// 3. Generate Signed Download URL for Any File Path
 export async function getSubmissionSignedUrl(filePath: string): Promise<string | null> {
   try {
-    const { data, error } = await supabase.storage
-      .from("round1-submissions")
-      .createSignedUrl(filePath, 3600);
-
-    if (error || !data) return null;
-    return data.signedUrl;
+    const resp = await fetch("/api/submissions/signed-url", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filePath }),
+    });
+    if (resp.ok) {
+      const resData = await resp.json();
+      return resData.signedUrl || null;
+    }
   } catch (err) {
-    return null;
+    // Client fallback
+    const { data } = await supabase.storage.from("round1-submissions").createSignedUrl(filePath, 3600);
+    return data?.signedUrl || null;
   }
+  return null;
 }

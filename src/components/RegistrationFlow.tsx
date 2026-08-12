@@ -923,13 +923,13 @@ export default function RegistrationFlow() {
                   </div>
                 </div>
 
-                {/* ── DEDICATED SECTION: ROUND 1 — IDEA SUBMISSION ── */}
+                {/* ── DEDICATED SECTION: ROUND 1 // PROPOSAL SUBMISSION ── */}
                 <div className="p-6 sm:p-8 rounded-3xl bg-black/80 border border-purple-500/40 shadow-[0_0_30px_rgba(138,43,226,0.3)] space-y-6 backdrop-blur-md">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-purple-500/20 pb-4">
                     <div>
                       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-950 border border-purple-500/40 text-cyan-300 font-mono text-[10px] uppercase font-bold tracking-widest mb-1">
                         <FileText className="w-3.5 h-3.5 text-amber-400" />
-                        <span>ROUND 1 — IDEA SUBMISSION</span>
+                        <span>ROUND 1 // PROPOSAL SUBMISSION</span>
                       </div>
                       <h4 className="text-xl font-bold font-mono text-white">
                         BUSINESS INNOVATION IDEA SUBMISSION
@@ -943,12 +943,12 @@ export default function RegistrationFlow() {
                       className="px-5 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-mono text-xs font-bold uppercase tracking-wider hover:opacity-90 transition-opacity shadow-[0_0_20px_rgba(34,211,238,0.4)] flex items-center gap-2 shrink-0"
                     >
                       <Download className="w-4 h-4" />
-                      <span>DOWNLOAD OFFICIAL TEMPLATE</span>
+                      <span>MIRAETHON 2K26 TEAM TEMPLATE</span>
                     </a>
                   </div>
 
                   <p className="text-xs font-mono text-gray-300 leading-relaxed">
-                    Download the official Miraethon 2026 template, prepare your business innovation idea deck, and upload the final PPTX or PDF file before the deadline.
+                    Download the official Miraethon 2026 team template, prepare your proposal deck, and upload the final PPT, PPTX, or PDF file before the deadline.
                   </p>
 
                   {/* Info Box */}
@@ -959,10 +959,10 @@ export default function RegistrationFlow() {
                     </div>
                     <div>
                       <span className="text-gray-400 block text-[10px] uppercase">ACCEPTED FORMATS:</span>
-                      <span className="text-cyan-300 font-bold">.PPTX / .PPT / .PDF</span>
+                      <span className="text-cyan-300 font-bold">PPT / PPTX / PDF</span>
                     </div>
                     <div>
-                      <span className="text-gray-400 block text-[10px] uppercase">MAX FILE SIZE:</span>
+                      <span className="text-gray-400 block text-[10px] uppercase">MAXIMUM SIZE:</span>
                       <span className="text-pink-400 font-bold">10 MB</span>
                     </div>
                   </div>
@@ -973,18 +973,18 @@ export default function RegistrationFlow() {
                       <div className="flex items-center justify-between">
                         <span className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 font-bold uppercase">
                           <CheckCircle className="w-4 h-4" />
-                          <span>ROUND 1 SUBMISSION ACTIVE</span>
+                          <span>✓ SUBMISSION RECEIVED</span>
                         </span>
                         <span className="text-[10px] font-mono text-gray-400">
-                          {new Date(submission.submitted_at).toLocaleString()}
+                          Submitted: {new Date(submission.submitted_at).toLocaleString()}
                         </span>
                       </div>
 
                       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-xl bg-black/60 border border-emerald-500/20 font-mono text-xs">
                         <div className="truncate">
-                          <span className="text-white font-bold block truncate">{submission.file_name}</span>
-                          <span className="text-gray-400 text-[10px]">
-                            Size: {(submission.file_size / (1024 * 1024)).toFixed(2)} MB
+                          <span className="text-white font-bold block truncate">Filename: {submission.file_name}</span>
+                          <span className="text-emerald-400 text-[10px] font-bold">
+                            Status: SUBMITTED • Size: {(submission.file_size / (1024 * 1024)).toFixed(2)} MB
                           </span>
                         </div>
 
@@ -995,7 +995,7 @@ export default function RegistrationFlow() {
                             rel="noopener noreferrer"
                             className="px-3.5 py-1.5 rounded-lg bg-emerald-950 border border-emerald-500/50 text-emerald-300 hover:bg-emerald-900 text-[10px] font-bold uppercase shrink-0"
                           >
-                            OPEN / DOWNLOAD FILE
+                            OPEN / DOWNLOAD PROPOSAL
                           </a>
                         )}
                       </div>
@@ -1003,7 +1003,7 @@ export default function RegistrationFlow() {
                   ) : (
                     <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-300 font-mono text-xs flex items-center gap-2">
                       <Clock className="w-4 h-4 text-amber-400 shrink-0" />
-                      <span>No submission uploaded yet for this squad.</span>
+                      <span>No proposal submitted yet for this squad.</span>
                     </div>
                   )}
 
@@ -1011,12 +1011,12 @@ export default function RegistrationFlow() {
                   {deadlinePassedState ? (
                     <div className="p-4 rounded-2xl bg-red-950/40 border border-red-500/50 text-red-300 font-mono text-xs flex items-center gap-2">
                       <Lock className="w-4 h-4 text-red-400 shrink-0" />
-                      <span>🔒 ROUND 1 SUBMISSION IS LOCKED. Upload and file replacement closed on 28 August 2026.</span>
+                      <span>SUBMISSION CLOSED — Round 1 submissions closed on 28 August 2026.</span>
                     </div>
                   ) : isLeader ? (
                     <form onSubmit={handleUploadSubmission} className="space-y-4 pt-2">
                       <div className="font-mono text-xs uppercase font-bold text-cyan-300">
-                        {submission ? "REPLACE SUBMISSION FILE (LEADER ONLY):" : "UPLOAD ROUND 1 IDEA FILE (LEADER ONLY):"}
+                        {submission ? "REPLACE PROPOSAL FILE (LEADER ONLY):" : "UPLOAD PROPOSAL (LEADER ONLY):"}
                       </div>
 
                       {uploadError && (
@@ -1049,7 +1049,7 @@ export default function RegistrationFlow() {
                           ) : (
                             <>
                               <UploadCloud className="w-4 h-4 text-cyan-300" />
-                              <span>{submission ? "REPLACE FILE" : "UPLOAD PPT/PDF"}</span>
+                              <span>{submission ? "REPLACE PROPOSAL" : "UPLOAD PROPOSAL"}</span>
                             </>
                           )}
                         </button>
