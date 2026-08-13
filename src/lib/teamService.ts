@@ -5,6 +5,7 @@ export interface Profile {
   full_name: string;
   email: string;
   phone?: string;
+  phone_number?: string;
   usn?: string;
   branch?: string;
   semester?: string;
@@ -220,9 +221,38 @@ export async function getHackathonSettings(): Promise<HackathonSettings> {
   };
 }
 
+// Helper: Validate and normalize Indian phone numbers (+91 default, 10 digits starting with 6-9)
+export function validateAndNormalizeIndianPhone(phoneInput: string): { isValid: boolean; normalized?: string; error?: string } {
+  if (!phoneInput || !phoneInput.trim()) {
+    return { isValid: false, error: "Phone number is required." };
+  }
+
+  const cleaned = phoneInput.trim().replace(/[\s\-\(\)]/g, "");
+
+  if (/[^\d+]/.test(cleaned)) {
+    return { isValid: false, error: "Phone number must contain digits only." };
+  }
+
+  let digits = cleaned;
+  if (cleaned.startsWith("+91")) {
+    digits = cleaned.slice(3);
+  } else if (cleaned.startsWith("91") && cleaned.length === 12) {
+    digits = cleaned.slice(2);
+  } else if (cleaned.startsWith("0") && cleaned.length === 11) {
+    digits = cleaned.slice(1);
+  }
+
+  if (!/^[6-9]\d{9}$/.test(digits)) {
+    return { isValid: false, error: "Please enter a valid 10-digit Indian mobile number." };
+  }
+
+  return { isValid: true, normalized: `+91${digits}` };
+}
+
 // 2. REAL Supabase Student Sign Up
 export async function signUpStudent(
   fullName: string,
+  phoneNumber: string,
   email: string,
   pass: string
 ): Promise<{ user: any; profile: Profile | null; error?: string }> {
@@ -233,12 +263,23 @@ export async function signUpStudent(
       return { user: null, profile: null, error: "Registrations for Miraethon 2026 are closed." };
     }
 
+    // Phone validation
+    const phoneCheck = validateAndNormalizeIndianPhone(phoneNumber);
+    if (!phoneCheck.isValid || !phoneCheck.normalized) {
+      return { user: null, profile: null, error: phoneCheck.error || "Invalid phone number." };
+    }
+    const normalizedPhone = phoneCheck.normalized;
+
     // REAL Supabase Auth SignUp Call
     const { data: authData, error: authErr } = await supabase.auth.signUp({
       email,
       password: pass,
       options: {
-        data: { full_name: fullName },
+        data: {
+          full_name: fullName,
+          phone_number: normalizedPhone,
+          phone: normalizedPhone,
+        },
       },
     });
 
@@ -255,21 +296,23 @@ export async function signUpStudent(
       id: user.id,
       full_name: fullName,
       email,
+      phone: normalizedPhone,
+      phone_number: normalizedPhone,
       role: "student",
     };
 
     // Update profile row (which was automatically created by handle_new_user trigger)
-    const { error: updateErr } = await supabase
+    const { error: updateErr1 } = await supabase
       .from("profiles")
-      .update({ full_name: fullName, email, role: "student" })
+      .update({ full_name: fullName, email, phone: normalizedPhone, phone_number: normalizedPhone, role: "student" })
       .eq("id", user.id);
 
-    if (updateErr) {
-      // Safe fallback upsert if trigger didn't fire
-      const { error: upsertErr } = await supabase.from("profiles").upsert(newProfile);
-      if (upsertErr) {
-        console.warn("Profile table setup notice:", upsertErr.message);
-      }
+    if (updateErr1) {
+      // Fallback if phone_number column is not in PostgREST schema cache
+      await supabase
+        .from("profiles")
+        .update({ full_name: fullName, email, phone: normalizedPhone, role: "student" })
+        .eq("id", user.id);
     }
 
     if (!authData.session) {
@@ -307,21 +350,35 @@ export async function getCurrentUserProfile(): Promise<{
     const user = authData.user;
 
     // Direct database fetch from public.profiles table
-    const { data: profData, error: profErr } = await supabase
+    let profData: any = null;
+    const { data: pData, error: profErr } = await supabase
       .from("profiles")
-      .select("id, full_name, email, role, phone, usn, branch, semester")
+      .select("id, full_name, email, role, phone, phone_number, usn, branch, semester")
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profErr || !profData) {
-      console.warn("Profile database lookup notice:", profErr?.message);
-      const fallbackProfile: Profile = {
-        id: user.id,
-        full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
-        email: user.email || "",
-        role: "student",
-      };
-      return { user, profile: fallbackProfile, role: "student" };
+    if (profErr || !pData) {
+      // Fallback query without phone_number column
+      const { data: profFallback } = await supabase
+        .from("profiles")
+        .select("id, full_name, email, role, phone, usn, branch, semester")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!profFallback) {
+        const fallbackProfile: Profile = {
+          id: user.id,
+          full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
+          email: user.email || "",
+          phone: user.user_metadata?.phone_number || user.user_metadata?.phone,
+          phone_number: user.user_metadata?.phone_number || user.user_metadata?.phone,
+          role: "student",
+        };
+        return { user, profile: fallbackProfile, role: "student" };
+      }
+      profData = profFallback;
+    } else {
+      profData = pData;
     }
 
     // Parse role safely from public.profiles
@@ -329,11 +386,14 @@ export async function getCurrentUserProfile(): Promise<{
     const validRole: "student" | "judge" | "admin" =
       rawRole === "admin" ? "admin" : rawRole === "judge" ? "judge" : "student";
 
+    const phoneVal = profData.phone_number || profData.phone;
+
     const profile: Profile = {
       id: profData.id,
       full_name: profData.full_name || user.email?.split("@")[0] || "User",
       email: profData.email || user.email || "",
-      phone: profData.phone,
+      phone: phoneVal,
+      phone_number: phoneVal,
       usn: profData.usn,
       branch: profData.branch,
       semester: profData.semester,

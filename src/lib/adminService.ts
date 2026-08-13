@@ -1,5 +1,14 @@
 import { supabase } from "./supabase/client";
 
+export interface MemberContact {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  phone_number?: string;
+  member_role: string;
+}
+
 export interface TrackRankEntry {
   rank: number;
   team_id: string;
@@ -18,6 +27,8 @@ export interface TrackRankEntry {
   evaluation_count: number;
   is_shortlisted: boolean;
   tie_breaker_note?: string;
+  leader_contact?: MemberContact;
+  members?: MemberContact[];
 }
 
 export interface TrackProgress {

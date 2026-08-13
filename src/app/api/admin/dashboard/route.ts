@@ -61,7 +61,28 @@ export async function GET(req: NextRequest) {
     const shortlistMap = new Map<string, boolean>();
     (shortlists || []).forEach((s: any) => shortlistMap.set(s.team_id, s.is_shortlisted));
 
-    // 7. Group teams & build track-wise leaderboards
+    // 7. Fetch Team Members and Profiles for Admin Contact Visibility
+    const { data: allMembers } = await supabaseAdmin
+      .from("team_members")
+      .select("team_id, member_role, user_id, profiles(id, full_name, email, phone, phone_number)");
+
+    const teamMembersMap = new Map<string, any[]>();
+    (allMembers || []).forEach((m: any) => {
+      const list = teamMembersMap.get(m.team_id) || [];
+      const prof = m.profiles || {};
+      const phoneVal = prof.phone_number || prof.phone || null;
+      list.push({
+        id: m.user_id,
+        full_name: prof.full_name || "Team Member",
+        email: prof.email || "",
+        phone: phoneVal,
+        phone_number: phoneVal,
+        member_role: m.member_role,
+      });
+      teamMembersMap.set(m.team_id, list);
+    });
+
+    // 8. Group teams & build track-wise leaderboards
     const trackProgressMap = new Map<string, any>();
 
     themeList.forEach((t: any) => {
@@ -131,6 +152,9 @@ export async function GET(req: NextRequest) {
         const isShortlisted = shortlistMap.get(team.id) || false;
         if (isShortlisted) totalShortlistedCount += 1;
 
+        const membersList = teamMembersMap.get(team.id) || [];
+        const leader = membersList.find((m) => m.member_role === "leader") || membersList[0];
+
         trackProg.rankings.push({
           rank: 0,
           team_id: team.id,
@@ -148,6 +172,8 @@ export async function GET(req: NextRequest) {
           track_relevance_score: trackRelevanceScore,
           evaluation_count: evals.length,
           is_shortlisted: isShortlisted,
+          leader_contact: leader || null,
+          members: membersList,
         });
 
         if (!trackProgressMap.has(themeId)) {

@@ -550,6 +550,7 @@ export default function AdminPage() {
                             <tr className="border-b border-purple-500/20 text-gray-400 uppercase">
                               <th className="py-2 px-3">Team Name</th>
                               <th className="py-2 px-3">Code</th>
+                              <th className="py-2 px-3">Leader Contact</th>
                               <th className="py-2 px-3">File Name</th>
                               <th className="py-2 px-3">Score</th>
                               <th className="py-2 px-3">Shortlisted</th>
@@ -561,6 +562,19 @@ export default function AdminPage() {
                               <tr key={item.team_id} className="hover:bg-purple-950/20">
                                 <td className="py-3 px-3 font-bold text-white">{item.team_name}</td>
                                 <td className="py-3 px-3 text-cyan-400">{item.team_code}</td>
+                                <td className="py-3 px-3">
+                                  {item.leader_contact ? (
+                                    <div>
+                                      <div className="text-white font-bold">{item.leader_contact.full_name}</div>
+                                      <div className="text-emerald-400 font-bold">
+                                        {item.leader_contact.phone_number || item.leader_contact.phone || "No phone"}
+                                      </div>
+                                      <div className="text-gray-400 text-[10px]">{item.leader_contact.email}</div>
+                                    </div>
+                                  ) : (
+                                    <span className="text-gray-500">—</span>
+                                  )}
+                                </td>
                                 <td className="py-3 px-3 text-gray-300 truncate max-w-[200px]">
                                   {item.file_name || "—"}
                                 </td>
