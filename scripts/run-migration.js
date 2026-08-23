@@ -243,7 +243,7 @@ async function main() {
     if (themesRes.data.length === 0) {
       console.log('[INFO] No themes found — seeding 6 tracks...');
       const themes = [
-        { name: '01 — RETAIL & REAL ESTATE', slug: 'retail-real-estate', description: 'Augmented Shopping & Spatial Commerce', image_url: '/New_images/Retail.png', is_active: true },
+        { name: '01 — RETAIL & REAL ESTATE', slug: 'retail-real-estate', description: 'Augmented Shopping & Spatial Commerce', image_url: '/New_images/retail_realestate.png', is_active: true },
         { name: '02 — FINANCIAL & INVESTMENTS', slug: 'financial-investments', description: 'Decentralized Wealth & Smart Fintech', image_url: '/New_images/finance.png', is_active: true },
         { name: '03 — HEALTH & WELLNESS', slug: 'health-wellness', description: 'Biotech Signals & Preventive Care', image_url: '/New_images/health.png', is_active: true },
         { name: '04 — TRAVEL & FOOD', slug: 'travel-food', description: 'Autonomous Expeditions & Ghost Kitchens', image_url: '/New_images/travel.png', is_active: true },

@@ -67,7 +67,7 @@ CREATE POLICY "Anyone can read active themes" ON public.themes
 
 -- Seed Data for 6 Tracks
 INSERT INTO public.themes (name, slug, description, image_url) VALUES
-('01 — RETAIL & REAL ESTATE', 'retail-real-estate', 'Augmented Shopping & Spatial Commerce', '/New_images/Retail.png'),
+('01 — RETAIL & REAL ESTATE', 'retail-real-estate', 'Augmented Shopping & Spatial Commerce', '/New_images/retail_realestate.png'),
 ('02 — FINANCIAL & INVESTMENTS', 'financial-investments', 'Decentralized Wealth & Smart Fintech', '/New_images/finance.png'),
 ('03 — HEALTH & WELLNESS', 'health-wellness', 'Biotech Signals & Preventive Care', '/New_images/health.png'),
 ('04 — TRAVEL & FOOD', 'travel-food', 'Autonomous Expeditions & Ghost Kitchens', '/New_images/travel.png'),

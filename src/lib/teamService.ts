@@ -62,7 +62,7 @@ export const THEME_TRACKS: ThemeTrack[] = [
     name: "01 — RETAIL & REAL ESTATE",
     slug: "retail-real-estate",
     description: "Augmented Shopping & Spatial Commerce",
-    image_url: "/New_images/Retail.png",
+    image_url: "/New_images/retail_realestate.png",
   },
   {
     id: "finance-investments",
@@ -130,7 +130,7 @@ export async function fetchThemes(): Promise<ThemeTrack[]> {
         name: t.name,
         slug: t.slug,
         description: t.description || "",
-        image_url: t.image_url || "/New_images/Retail.png",
+        image_url: t.image_url || "/New_images/retail_realestate.png",
       }));
     }
   } catch (err) {

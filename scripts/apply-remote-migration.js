@@ -50,7 +50,7 @@ async function applyRemoteMigration() {
   // Verify seeds: themes table
   console.log('2. Checking / Seeding 6 Themes in remote database...');
   const themes = [
-    { name: '01 — RETAIL & REAL ESTATE', slug: 'retail-real-estate', description: 'Augmented Shopping & Spatial Commerce', image_url: '/New_images/Retail.png' },
+    { name: '01 — RETAIL & REAL ESTATE', slug: 'retail-real-estate', description: 'Augmented Shopping & Spatial Commerce', image_url: '/New_images/retail_realestate.png' },
     { name: '02 — FINANCIAL & INVESTMENTS', slug: 'financial-investments', description: 'Decentralized Wealth & Smart Fintech', image_url: '/New_images/finance.png' },
     { name: '03 — HEALTH & WELLNESS', slug: 'health-wellness', description: 'Biotech Signals & Preventive Care', image_url: '/New_images/health.png' },
     { name: '04 — TRAVEL & FOOD', slug: 'travel-food', description: 'Autonomous Expeditions & Ghost Kitchens', image_url: '/New_images/travel.png' },

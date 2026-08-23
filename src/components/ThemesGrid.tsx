@@ -24,13 +24,20 @@ const TRACKS: Track[] = [
     id: "retail",
     num: "01",
     name: "RETAIL & REAL ESTATE",
-    subtitle: "Augmented Shopping & Spatial Commerce",
+    subtitle: "Smart Commerce, Property Tech & Spatial Intelligence",
     accentColor: "#f59e0b",
     borderGlow: "hover:border-amber-400 hover:shadow-[0_0_35px_rgba(245,158,11,0.6)]",
-    image: "/New_images/Retail.png",
-    description: "Step into spatial commerce and AR retail experiences. Combine physical foot traffic with autonomous supply chains, generative AI product try-ons, and dynamic phygital customer journeys.",
-    problemStatement: "Traditional retail struggles with high return rates and disengaged physical store experiences. How can spatial computing and AI revolutionize customer shopping?",
-    keyAreas: ["Spatial Shopping Experiences", "AI Dynamic Pricing & Inventory", "Phygital Store Innovations", "Virtual Try-On Tech"],
+    image: "/New_images/retail_realestate.png",
+    description: "Reimagine physical and digital spaces through AI, spatial computing, and intelligent automation. From hyper-personalized store experiences, demand forecasting, and autonomous retail supply chains to AI-driven property discovery, smart building telemetry, and predictive asset valuation—build next-gen solutions transforming how humans buy, sell, manage, and inhabit physical and virtual spaces.",
+    problemStatement: "Modern retail faces high return rates, fragmented omnichannel customer journeys, and supply chain stockouts, while real estate suffers from manual property valuations, opaque tenant matching, and inefficient building operations. How can AI, spatial computing, and automated analytics revolutionize physical commerce and property intelligence?",
+    keyAreas: [
+      "AI Property Discovery & Matching",
+      "Demand Forecasting & Inventory Intelligence",
+      "Smart Building IoT & Predictive Maintenance",
+      "Phygital Shopping & AR Product Try-Ons",
+      "Automated Tenant & Store Operations",
+      "Omnichannel Personalization & Pricing"
+    ],
   },
   {
     id: "finance",
@@ -167,7 +174,11 @@ function Theme3DCard({
               alt={track.name}
               fill
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110"
+              className={`transition-transform duration-700 ease-out group-hover:scale-105 ${
+                track.id === "retail"
+                  ? "object-contain bg-[#05050a] p-1 object-center"
+                  : "object-cover object-center"
+              }`}
               priority={index < 2}
             />
 
@@ -314,7 +325,11 @@ export default function ThemesGrid() {
                   src={selectedTrack.image}
                   alt={selectedTrack.name}
                   fill
-                  className="object-cover object-center"
+                  className={
+                    selectedTrack.id === "retail"
+                      ? "object-contain bg-[#05050a] p-2 object-center"
+                      : "object-cover object-center"
+                  }
                   priority
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#080812] via-black/40 to-transparent" />
